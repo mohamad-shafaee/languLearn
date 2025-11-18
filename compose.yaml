@@ -1,0 +1,136 @@
+services:
+    laravel.test:
+        build:
+            context: './backend/docker/8.4'
+            dockerfile: Dockerfile.backend
+            args:
+                WWWGROUP: '1000'
+                WWWUSER: '1000'
+                POSTGRES_VERSION: '15'
+                MYSQL_CLIENT: 'default-mysql-client'
+        image: 'sail-8.4/app'
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        env_file:
+            - ./backend/.env
+        ports:
+            - '80:80'
+        environment:
+            WWWUSER: '1000'
+            LARAVEL_SAIL: 1
+            XDEBUG_MODE: 'off'
+            XDEBUG_CONFIG: 'client_host=host.docker.internal'
+            IGNITION_LOCAL_SITES_PATH: '/home/mohsh/langwich/backend'
+        volumes:
+            - './backend:/var/www/html' 
+        networks:
+            - sail
+        depends_on:
+            - mysql
+            - redis
+            - meilisearch
+            - mailpit
+            - selenium
+    mysql:
+        image: 'mysql/mysql-server:8.0'
+        ports:
+            - '3306:3306'
+        environment:
+            MYSQL_ROOT_PASSWORD: 'anstrongpass1'
+            MYSQL_ROOT_HOST: '%'
+            MYSQL_DATABASE: 'langwich'
+            MYSQL_USER: 'sail'
+            MYSQL_PASSWORD: 'secret' 
+        volumes:
+            - 'sail-mysql:/var/lib/mysql'
+            - './backend/docker/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
+        networks:
+            - sail
+        healthcheck:
+            test:
+                - CMD
+                - mysqladmin
+                - ping
+                - '-psecret'
+            retries: 3
+            timeout: 5s
+    redis:
+        image: 'redis:alpine'
+        ports:
+            - '6379:6379'
+        volumes:
+            - 'sail-redis:/data'
+        networks:
+            - sail
+        healthcheck:
+            test:
+                - CMD
+                - redis-cli
+                - ping
+            retries: 3
+            timeout: 5s
+    meilisearch:
+        image: 'getmeili/meilisearch:latest'
+        ports:
+            - '7700:7700'
+        environment:
+            MEILI_NO_ANALYTICS: 'false'
+        volumes:
+            - 'sail-meilisearch:/meili_data'
+        networks:
+            - sail
+        healthcheck:
+            test:
+                - CMD
+                - wget
+                - '--no-verbose'
+                - '--spider'
+                - 'http://127.0.0.1:7700/health'
+            retries: 3
+            timeout: 5s
+    mailpit:
+        image: 'axllent/mailpit:latest'
+        ports:
+            - '1025:1025'
+            - '8025:8025'
+        networks:
+            - sail
+    selenium:
+        image: selenium/standalone-chromium
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        volumes:
+            - '/dev/shm:/dev/shm'
+        networks:
+            - sail
+    frontend:
+        build:
+            context: './frontend'
+            dockerfile: Dockerfile
+        image: 'langwich-frontend'
+        container_name: 'langwich-frontend'
+        ports:
+            - "5173:5173"
+        volumes:
+            # Mount your local source code to the same path used in Dockerfile
+            - './frontend:/usr/src/app'
+            # Keep container's node_modules isolated (so the mount above doesn't override them)
+            - 'langwich_node_modules:/usr/src/app/node_modules'
+        stdin_open: true
+        tty: true
+        networks:
+            - sail
+        environment:
+            - CHOKIDAR_USEPOLLING=true
+        command: npm run dev            
+networks:
+    sail:
+        driver: bridge
+volumes:
+    sail-mysql:
+        driver: local
+    sail-redis:
+        driver: local
+    sail-meilisearch:
+        driver: local
+    langwich_node_modules:
