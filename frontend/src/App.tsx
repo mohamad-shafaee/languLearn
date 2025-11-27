@@ -5,7 +5,8 @@ import Home from "./pages/home";
 import Login from "./pages/login";
 import Register from "./pages/register";
 import UserProfile from "./pages/user-profile";
-import ReqPass from "./pages/requestPassword"; 
+import ResetPass from "./pages/resetPassword"; 
+import NewPassPage from "./pages/newPassword";
 import About from "./pages/about";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
  
@@ -34,10 +35,26 @@ const App: React.FC = () => {
               }
             />
         <Route
-              path="/request-password"
+              path="/reset-password"
               element={
                 <AppLayout>
-                  <ReqPass />
+                  <ResetPass />
+                </AppLayout>
+              }
+            />
+        <Route
+              path="/enter-new-pass"
+              element={
+                <AppLayout>
+                  <NewPassPage />
+                </AppLayout>
+              }
+            />
+        <Route
+              path="/register"
+              element={
+                <AppLayout>
+                  <Register />
                 </AppLayout>
               }
             />
@@ -49,14 +66,6 @@ const App: React.FC = () => {
               element={
                 <AppLayout>
                   <Login />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <AppLayout>
-                  <Register />
                 </AppLayout>
               }
             />
@@ -79,7 +88,7 @@ const App: React.FC = () => {
 
             {/* Redirect guest-only routes to dashboard */}
             <Route path="/login" element={<Navigate to="/profile" replace />} />
-            <Route path="/register" element={<Navigate to="/profile" replace />} />
+            
           </>
         )}
 

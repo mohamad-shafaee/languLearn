@@ -6,8 +6,8 @@ import "./styles/global.css";
 import "./styles/responsive.css"; 
 
 
-ReactDOM.createRoot(document.getElementById("root")!).render( 
-  <React.StrictMode>
+ReactDOM.createRoot(document.getElementById("root")!).render(
+    <React.StrictMode>
     <AuthProvider> 
       <App /> 
     </AuthProvider> 
