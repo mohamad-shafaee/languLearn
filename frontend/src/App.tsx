@@ -8,6 +8,7 @@ import UserProfile from "./pages/user-profile";
 import ResetPass from "./pages/resetPassword"; 
 import NewPassPage from "./pages/newPassword";
 import About from "./pages/about";
+import ChangePassLogedinPage from "./pages/changePasswordLogedin";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
  
 const App: React.FC = () => {
@@ -71,6 +72,7 @@ const App: React.FC = () => {
             />
             {/* Redirect any auth-only page to /login */}
             <Route path="/profile" element={<Navigate to="/login" replace />} />
+            <Route path="/change-password-logedin-form" element={<Navigate to="/login" replace />} />
           </>
         )}
 
@@ -78,22 +80,30 @@ const App: React.FC = () => {
         {user && (
           <>
           <Route
-              path="/profile"
+              path="/profile/:id"
               element={
                 <AppLayout>
                   <UserProfile />
                 </AppLayout>
               }
             />
+            <Route
+              path="/change-password-logedin-form"
+              element={
+                <AppLayout>
+                  <ChangePassLogedinPage/>
+                </AppLayout>
+              }
+            />
 
             {/* Redirect guest-only routes to dashboard */}
-            <Route path="/login" element={<Navigate to="/profile" replace />} />
+            <Route path="/login" element={<Navigate to={`/profile/${user.id}`} replace />} />
             
           </>
         )}
 
         {/* --- CATCH ALL --- */}
-        <Route path="*" element={<Navigate to={user ? "/profile" : "/"} replace />} />
+        <Route path="*" element={<Navigate to={user ? `/profile/${user.id}` : "/"} replace />} />
       </Routes>
     </BrowserRouter>
   );

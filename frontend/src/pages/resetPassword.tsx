@@ -56,7 +56,7 @@ const ResetPass: React.FC = () => {
         <label>Email</label>
         <input type="email" name="email"
              className="input email"
-             placeholder="Enter new password"
+             placeholder="Enter Email"
           value={email} onChange={e => setEmail(e.target.value)} disabled={isDisabled || isSubmitting} required />
           {errors && (<div className="error">{errors.map((err, index) => (<p key={index}>{err}</p>))}</div>)}
           {message && (<div className="msg-class-1">{message}</div>)}

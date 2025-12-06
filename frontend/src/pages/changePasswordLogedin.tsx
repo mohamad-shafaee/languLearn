@@ -1,14 +1,14 @@
 import React from "react";
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
 
 
-const NewPassPage: React.FC = () => {
+const ChangePasswordLogedin: React.FC = () => {
 
-  const [email, setEmail] = useState<string | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [form, setForm] = useState({pasword: "", confirmPassword: ""});
+  const { changePasswordLogedin } = useAuth();
+  
+  const [form, setForm] = useState({email: "", oldPassword: "" , password: "", confirmPassword: ""});
   const [errors, setErrors] = useState<string[] | null>([]);
   // local loading state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -16,13 +16,6 @@ const NewPassPage: React.FC = () => {
   // disable form after successful submission
   const [isDisabled, setIsDisabled] = useState<boolean>(false);
   const navigate = useNavigate();
-  const location = useLocation();
-  const { setNewPassword, loading } = useAuth();
-  useEffect(()=>{
-    const params = new URLSearchParams(location.search);
-    setToken(params.get("token"));
-    setEmail(params.get("email"));
-  }, [location.search]);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({...form, [e.target.name]: e.target.value});
@@ -32,16 +25,10 @@ const NewPassPage: React.FC = () => {
     e.preventDefault();
     setErrors([]);
 
-    if (!token || !email) {
-      setErrors(["Invalid password reset link."]);
+    if (!form.email || !form.oldPassword || !form.password || !form.confirmPassword) {
+      setErrors(["Complete all fields!"]);
       return;
-    }
-
-    // Basic validation
-    if (!form.password || !form.confirmPassword) {
-      setErrors(["Enter password and confirm it."]);
-      return;
-    }
+    } 
     
     if (form.password.length < 6) {
       setErrors(["Password must be at least 6 characters."]);
@@ -54,7 +41,7 @@ const NewPassPage: React.FC = () => {
 
     setIsSubmitting(true);
 
-    const result = await setNewPassword(email, token, form.password, form.confirmPassword);
+    const result = await changePasswordLogedin(form.email, form.oldPassword, form.password, form.confirmPassword);
     setIsSubmitting(false);
     if (!result.success) {
             setErrors(result.errors);
@@ -68,10 +55,25 @@ const NewPassPage: React.FC = () => {
 
 
   return (
-    <div className="reset-pass-page">
-      <div className="title">Reset Password</div>
+    <div className="w-1/2">
+      <div className="title">Change Password</div>
       {errors && (<div className="error">{errors.map((err, index) => (<p key="index">{err}</p>))}</div>)}
-      <form onSubmit={handleSubmit} className="reset-pass-form">
+      <form onSubmit={handleSubmit} className="change-pass-form">
+          <div className="input-box">
+          <div className="label">Email</div>
+          <input name="email"
+             value={form.email} onChange={handleFormChange}
+             className="input email"
+             placeholder="Enter your email" disabled={isSubmitting || isDisabled}/>
+          </div>
+          <div className="input-box">
+          <div className="label">Old Password</div>
+          <input type="password" name="oldPassword"
+             value={form.oldPassword} onChange={handleFormChange}
+             className="input password"
+             placeholder="Enter old password" disabled={isSubmitting || isDisabled}/>
+          </div>
+
           <div className="input-box">
           <div className="label">Password</div>
           <input type="password" name="password"
@@ -92,4 +94,4 @@ const NewPassPage: React.FC = () => {
   );
 };
 
-export default NewPassPage;
+export default ChangePasswordLogedin;

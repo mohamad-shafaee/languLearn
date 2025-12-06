@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 
 Route::post('/forgot-password', [UserController::class, 'sendResetLink'])->middleware('guest');
 Route::post('/reset-password', [UserController::class, 'resetPassword'])->middleware('guest');
+Route::middleware('auth:sanctum')->post('/chang-password-logedin', [UserController::class, 'changePasswordLogedin']);
+
 
 
 // Example API route
@@ -17,10 +19,11 @@ Route::get('/status', function () {
     return response()->json(['status' => 'API running']);
 });
 
-Route::post('/login', [UserController::class, 'login'])/*->name('login')*/->middleware('throttle:5,1');;
+Route::post('/login', [UserController::class, 'login'])/*->name('login')*/->middleware('throttle:5,1');
 Route::middleware('auth:sanctum')->post('/logout', [UserController::class, 'logout'])->name('logout')->middleware('throttle:5,1');
 
 Route::middleware('auth:sanctum')->get('/user', [UserController::class, 'getUser'])->name('get.user');
+Route::middleware('auth:sanctum')->get('/userdata/{id}', [UserController::class, 'getUserData'])->name('get.userdata');
 Route::post('/register', [UserController::class, 'register'])->middleware('throttle:5,1'); // 5 requests per minute per key (default key: IP);
 
 
@@ -33,4 +36,6 @@ Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $requ
     $request->fulfill();
     return redirect()->away(config('app.frontend_url') . '/profile');
 })->middleware(['auth:sanctum', 'signed'])->name('verification.verify'); 
+Route::middleware('auth:sanctum')->post('/upload-user-image', [UserController::class, 'saveProfileImage']);
+Route::middleware('auth:sanctum')->post('/edituser', [UserController::class, 'editUserData']);
 

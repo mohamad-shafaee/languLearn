@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 interface User {
+  id: number;
   name: string;
   email: string;
 }
@@ -16,6 +17,7 @@ interface AuthContextType {
   logout: () => void;
   requestPassReset: (email: string) => Promise<void>;
   setNewPassword: (email: string, token: string, password: string, confirmPassword: string) => Promise<void>;
+  changePasswordLogedin: (email: string, oldPassword: string, password: string, confirmPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -29,6 +31,7 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
   requestPassReset: async () => {},
   setNewPassword: async () => {},
+  changePasswordLogedin: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -263,9 +266,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   };
 
+  const changePasswordLogedin = async (email, oldPassword, password, confirmPassword) => {
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/chang-password-logedin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({email: email,
+                              oldPassword: oldPassword,
+                              password: password,
+                              password_confirmation: confirmPassword})
+      });
+      if (!response.ok) {
+            return { success: false, errors: ["Something went wrong!"]};
+          }
+      const result = await response.json();
+      if(result.status){
+        return { success: true, errors: []};
+      }
+      return { success: false, errors: ["Change password failure!"]};
+    } catch {} finally {}
+  };
+
   return (
     <AuthContext.Provider 
-      value={{ user, setUser, token, setToken, loading, register, login, logout, requestPassReset, setNewPassword }}>
+      value={{ user, setUser, token, setToken, loading, register, login, logout, requestPassReset, setNewPassword, changePasswordLogedin }}>
       {children}
     </AuthContext.Provider>
   );

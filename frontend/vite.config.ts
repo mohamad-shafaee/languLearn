@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(),
+            tailwindcss(),],
     server: {
     host: '0.0.0.0', // allow connections from outside the container
     port: 5173,        // optional, fix port to 5173

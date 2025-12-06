@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name')->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('phone')->unique()->nullable();
@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('x_id')->nullable();
             $table->string('google_id')->nullable();
             $table->string('linkedin_id')->nullable();
+            $table->string('type')->nullable(); //usual, admin, ...
             $table->timestamps();
         });
 

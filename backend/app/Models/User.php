@@ -32,6 +32,8 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
         'email',
         'password',
         'google_id',
+        'phone',
+        'type',
     ];
 
     /**
@@ -56,6 +58,11 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
             'password' => 'hashed',
         ];
     }
+
+    public function info()
+     {
+        return $this->hasOne(UserInfo::class, 'user_id');
+      }
 
     
     
