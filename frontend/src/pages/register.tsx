@@ -1,7 +1,7 @@
 import React from "react";
 import { useState } from "react";
 import { useAuth } from "../auth";
-import { useNavigate } from "react-router-dom";
+//import { useNavigate } from "react-router-dom";
 
 const Register: React.FC = () => {
   const [form, setForm] = useState({
@@ -17,7 +17,7 @@ const Register: React.FC = () => {
   const [message, setMessage] = useState<string>("");
   const { register } = useAuth();
   const [errors, setErrors] = useState<string[] | null>([]);
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({...form, [e.target.name]:e.target.value});

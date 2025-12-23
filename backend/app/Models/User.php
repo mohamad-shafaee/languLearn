@@ -32,8 +32,7 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
         'email',
         'password',
         'google_id',
-        'phone',
-        'type',
+        'phone', 
     ];
 
     /**
@@ -63,6 +62,27 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
      {
         return $this->hasOne(UserInfo::class, 'user_id');
       }
+
+    public function writtenLessons()  // lessons written by user
+     {
+        return $this->hasMany(Lesson::class, 'author_id');
+      }
+
+    public function fields()  //fields that user is taken
+    {
+        return $this->belongsToMany(Field::class, 'field_users')
+        ->using(FieldUser::class)
+        ->withPivot('priority', 'last_lesson_id', 'last_lesson_stat')
+        ->withTimestamps();
+    }
+
+    public function lessons()
+    {
+    return $this->belongsToMany(Lesson::class, 'user_ls')
+                ->using(UserLs::class)
+                ->withPivot('score')
+                ->withTimestamps();
+     }
 
     
     

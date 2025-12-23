@@ -363,7 +363,8 @@ const UserProfile: React.FC = () => {
 
   return (
     <div className="w-full ">
-    { id && (owner || userInformation?.public_profile) && <> <div className="flex gap-4 w-full border-2 border-red-500 mt-4">
+    { id && (owner || userInformation?.public_profile) && <> 
+    <div className="flex gap-4 w-full border-2 border-red-500 mt-4">
       <div className="flex w-36 h-36 relative border-1 border-blue-500">
         <img src={userInformation?.img || defaultUser} alt="user image"
           className="w-36 h-36 rounded-full mr-2"/>
