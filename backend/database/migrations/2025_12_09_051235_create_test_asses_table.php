@@ -15,16 +15,14 @@ return new class extends Migration
             $table->id();
             $table->foreignId('lesson_id')      // FK column
                   ->constrained('lessons')      // references id on lessons table
-                  ->onDelete('cascade');
-           // $table->foreignId('author_id')      // FK column
-             //     ->constrained('users')      // references id on users table
-              //    ->onDelete('cascade');      
+                  ->onDelete('cascade');     
             $table->string('body')->nullable();
             $table->string('opt1')->nullable();
             $table->string('opt2')->nullable();
             $table->string('opt3')->nullable();
             $table->string('opt4')->nullable();
             $table->unsignedTinyInteger('answer')->nullable();
+            $table->unsignedTinyInteger('type')->nullable();
             $table->timestamps();
         });
     }

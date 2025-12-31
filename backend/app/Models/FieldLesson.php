@@ -9,5 +9,5 @@ class FieldLesson extends Pivot
 {
     protected $table = 'field_lessons';
     // Add extra fields if needed
-    protected $fillable = ['field_id', 'lesson_id', 'order'];
+    protected $fillable = ['field_id', 'lesson_id', 'lesson_order'];
 }

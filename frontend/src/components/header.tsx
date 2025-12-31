@@ -35,7 +35,7 @@ const Header: React.FC = () => {
         <nav className="hidden md:flex gap-6 text-slate-700 mr-auto">
           <a href="#" className="hover:text-sky-600" onClick={(e)=>goToPage(e, '')}>Home</a>
           <a href="#" className="hover:text-sky-600" onClick={(e)=>goToPage(e, 'about')}>About&Contacts</a>
-          <a href="#" className="hover:text-sky-600">Fields</a>
+          <a href="#" className="hover:text-sky-600" onClick={(e)=>goToPage(e, 'working')}>Start</a>
         </nav>
         {/* Login/Register - User menu */}
         <div className="mr-auto">
@@ -65,7 +65,7 @@ const Header: React.FC = () => {
         <div className="md:hidden bg-white border-t p-4 space-y-3">
           <a href="#" className="block hover:text-sky-600" onClick={(e)=>goToPage(e, '')}>Home</a>
           <a href="#" className="block hover:text-sky-600" onClick={(e)=>goToPage(e, 'about')}>About&Contacts</a>
-          <a href="#" className="block hover:text-sky-600">Fields</a>
+          <a href="#" className="block hover:text-sky-600" onClick={(e)=>goToPage(e, 'working')}>Start</a>
         </div>
       )}
     </header>

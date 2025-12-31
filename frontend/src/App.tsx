@@ -14,6 +14,7 @@ import ChangePassLogedinPage from "./pages/changePasswordLogedin";
 import AdminPanel from "./pages/adminPanel";
 import CreateField from "./pages/createField";
 import EdLesson from "./pages/edLesson";
+import Working from "./pages/user-working";
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
  
@@ -80,6 +81,7 @@ const App: React.FC = () => {
             <Route path="/profile" element={<Navigate to="/login" replace />} />
             <Route path="/change-password-logedin-form" element={<Navigate to="/login" replace />} />
             <Route path="/create-lesson" element={<Navigate to="/login" replace />} />
+            <Route path="/working" element={<Navigate to="/login" replace />} />
           </>
         )}
 
@@ -99,6 +101,14 @@ const App: React.FC = () => {
               element={
                 <AppLayout>
                   <ChangePassLogedinPage/>
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/working"
+              element={
+                <AppLayout>
+                  <Working/>
                 </AppLayout>
               }
             />

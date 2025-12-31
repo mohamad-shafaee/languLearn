@@ -22,8 +22,7 @@ export type Language = {
 
 export type FieldItem = {
   id: number;
-  name: string;
-  order: number;
+  name: string; 
 };
 
 export type LessonItem = {

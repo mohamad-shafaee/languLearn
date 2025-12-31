@@ -119,7 +119,7 @@ const EdLesson: React.FC = () => {
         setSelectedFields(data.fields);
         
       } else {
-        alert("The lesson is not set to any fields yet!");
+        //alert("The lesson is not set to any fields yet!");
         
       }
     } catch (err) {
@@ -1347,7 +1347,7 @@ const submitWords = async () => {
         <div className="text-2xl text-blue-500 ml-4 mt-2">{index + 1}</div>
         <div className="flex px-2 w-full"><textarea 
           className="flex w-full bg-[#fff] mt-2 px-2 py-1 border-2 border-gray-300 rounded-md"
-        value={testObj.body} onChange={(e) => updateTestAssBody(testObj, e.target.value)}
+        value={testObj.body ?? ""} onChange={(e) => updateTestAssBody(testObj, e.target.value)}
                 placeholder="Test Body" rows="4" cols="50"  disabled={isSubmitting}></textarea>
         </div>
         <div className="flex px-2 w-full"><textarea 
@@ -1380,7 +1380,7 @@ const submitWords = async () => {
                onChange={() => setTestAssAnswer(testObj, 4)}/></div></div>
                 <div className="flex bg-gray-50 px-4 py-2 w-full">
                   <div className="flex w-fit px-2 py-1 border-2 
-                    border-red-300 flex bg-gray-150 hover:bg-gray-100
+                    border-red-300 bg-gray-150 hover:bg-gray-100
                      rounded-md" onClick={()=>{removeTestAss(testObj)}}>Remove Test</div></div>
   </div>) })} </div>
     <button type="button" 

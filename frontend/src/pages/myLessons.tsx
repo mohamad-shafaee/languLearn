@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../auth";
-import type { LessonItem } from "../types";
+//import type { LessonItem } from "../types";
 import { useNavigate } from "react-router-dom";
 import LessonCard from "../components/lessonCard";
 
@@ -20,24 +20,37 @@ type Field = {
   description: string | null;
 };
 
+export type LessonItem = {
+  id: number;
+  author_id: number;
+  author_name: string;
+  title: string;
+  img_path: string;
+  abstract: string;
+  fieldIds: FieldItem[];
+  status: string;
+  order: number | null;
+}
+
 const MyLessons: React.FC = () => {
   const { user, token } = useAuth();
   
   //const imgRef = useRef(null);
   const [lessons, setLessons] = useState<LessonItem[]>([]);
   const [page, setPage] = useState<number>(1);
-  const [perPage, serPerPage] = useState<number>(100);
+  const [perPage, setPerPage] = useState<number>(100);
   const [filter, setFilter] = useState<Filter>({fieldId: 0, recent: false, authorId: 0, search: ""});
   const [isGetting, setIsGetting] = useState<boolean>(false);
   const [fields, setFields] = useState<Field[]>([]);
+  const [selectedField, setSelectedField] = useState<Field | null>(null);
+  const [sortMode, setSortMode] = useState<boolean>(false);
   const navigate = useNavigate();
 
   const edit = (item) => {
     //open a page to edit item
     navigate(`/admin/lesson/${item.id}`); 
   };
-
-
+ 
   const changePublishStat = async (item, stat) => {
              try {
 
@@ -61,13 +74,10 @@ const MyLessons: React.FC = () => {
         const result = await response.json();
         if(result.success){
           setLessons(prev => prev.map(le => (le.id == item.id)? {...le, status: stat} : le));  //{...prev, status: stat}
-        }
-          
-       } catch {} finally {setIsGetting(false);};
-    
+        }  
+       } catch {} finally {setIsGetting(false);}; 
   };
-
-
+ 
   const remove = async (item) => {
     //
     const confirmed = window.confirm("Are you sure to archive the lesson?");
@@ -95,42 +105,12 @@ const MyLessons: React.FC = () => {
           setLessons(lessons.filter(le => le.id != item.id));
         }
           
-       } catch {} finally {setIsGetting(false);};
-
-         }
-      
+       } catch {} finally {setIsGetting(false);}; 
+         } 
     };
 
-  useEffect(()=>{
-    const getLessons = async () => {
-          try {
-
-           setIsGetting(true);
-           const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-lessons-cards`, {
-             method: "POST",
-             headers: {
-              "Content-Type": "application/json",
-              "Accept": "application/json",
-              "Authorization": `Bearer ${token}`, //send token here
-            },
-              body: JSON.stringify({
-                fieldId: filter.fieldId,
-                recent: filter.recent, 
-                authorId: filter.authorId,
-                search: filter.search,
-                              })
-      });
-      if (!response.ok) {
-        return;
-          
-          }
-      const result: LessonItem[] = await response.json();
-      setLessons(result); 
-          
-    } catch {} finally {setIsGetting(false);};
-    };
-
-    const getFields = async ()=>{
+    useEffect(()=>{
+     const getFields = async ()=>{
             try{
              const response_fields = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/fields`, {
              method: "GET",
@@ -145,16 +125,16 @@ const MyLessons: React.FC = () => {
 
            const fieldsData = await response_fields.json();
            setFields(fieldsData.fields);
+           setSelectedField(fieldsData.fields[1]);
 
         } catch {} finally {}
         }
-
-    getLessons();
     getFields();
 
-  }, [filter]);
+  }, []);
 
-  const getLessonsByField = async (f) => {
+  useEffect(()=>{
+      const getLessonsByField = async (f) => {
           try {
 
            setIsGetting(true);
@@ -177,10 +157,59 @@ const MyLessons: React.FC = () => {
           
           }
       const result: LessonItem[] = await response.json();
-      setLessons(result); 
+      setLessons(result);
           
     } catch {} finally {setIsGetting(false);};
     };
+
+    if(selectedField){
+      getLessonsByField(selectedField);
+    }
+    
+
+  }, [selectedField]);
+
+  
+
+
+    const sortItem = (item, order_val) => {
+      //first check that all orders are integer and are not same. 
+      setLessons(prev => 
+        prev.map(le => (le.id == item.id)? {...le, order: order_val} : le));
+
+    };
+
+  const sortLessons = async () => {
+    //send a fetch to update lessons orders
+             try {
+           const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/update-lessons-orders`, {
+             method: "POST",
+             headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Authorization": `Bearer ${token}`, //send token here
+            },
+              body: JSON.stringify({
+                fieldId: selectedField.id,
+                lessons: lessons, })
+      });
+      if (!response.ok) {
+        return;
+          
+          }
+      const result = await response.json();
+      if(result.sucess){
+
+        //sort the list in front end by order
+
+      }
+          
+    } catch {} finally {};
+  };
+
+  const setLessonOrders = () => {
+    setSortMode(!sortMode);
+  };
 
 
 
@@ -192,17 +221,30 @@ return <>
 <div className="flex border-1 border-black-100 px-4 py-8 w-full">
   <div className="flex flex-col border-1 border-green-300 h-screen w-[20%]">
     <div className="flex flex-col w-full px-2 py-2 mt-2">
-      {fields.map((item, index)=>(<div className="flex w-full px-2 py-2 mt-2 
-        text-xs hover:cursor-pointer hover:text-blue-400" onClick={()=>{getLessonsByField(item)}}>{item.name}</div>))}
+      {fields.slice().sort((a, b) => a.id - b.id)
+      .map((item, index)=>(<div key={item.id} className={`flex w-full px-2 
+      py-2 mt-2 text-xs hover:text-blue-500
+      ${selectedField?.id === item.id ? "font-bold hover:text-black-500" :
+       "hover:text-blue-500"} hover:cursor-pointer`}
+        onClick={()=>{setSelectedField(item);}}>{item.name}</div>))}
     </div>
   </div>
   <div className="flex flex-col w-[80%]">
-    {lessons.length > 0 && lessons.map((item, index) => {return(<div key={item.id} 
+    <div className="flex border-2 border-gray-300 px-2 py-2 w-full">
+      <div className="flex text-xs hover:bg-gray-100 hover:cursor-pointer border-2 border-gray-500
+     rounded-md mx-4 px-2 py-1 w-fit"
+       onClick={()=>{setLessonOrders()}}>Orders</div>
+    <div className="flex text-xs hover:bg-gray-100 hover:cursor-pointer border-2 border-gray-500
+     rounded-md mx-4 px-2 py-1 w-fit"
+       onClick={()=>{sortLessons()}} >Sort</div>
+     </div>
+    {lessons.length > 0 && lessons.slice().sort((a, b) => a.order - b.order)
+    .map((item, index) => {return(<div key={item.id} 
       className="flex">
-      <LessonCard item={item} onEditi={(i) => edit(i)} 
+      <LessonCard sortable={sortMode} item={item} onEditi={(i) => edit(i)} 
         onPublishi={(i) => changePublishStat(i, 'published')}
         onUnPublishi={(i) => changePublishStat(i, 'raw')}
-        onRemovei={(i) => remove(i)}/>
+        onRemovei={(i) => remove(i)} onSorti={(i, v)=> sortItem(i, v)}/>
     </div>);})}
   </div>
 </div>

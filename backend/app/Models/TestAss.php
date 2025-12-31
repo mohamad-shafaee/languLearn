@@ -20,6 +20,7 @@ class TestAss extends Model
         'opt3',
         'opt4',
         'answer',
+        'type',
     ];
 
     public function lesson()

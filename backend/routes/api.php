@@ -6,6 +6,7 @@ use App\Http\Controllers\GoogleController;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\FLController;
+use App\Http\Controllers\FLUController;
 
 use Illuminate\Http\Request;
 
@@ -43,6 +44,7 @@ Route::middleware('auth:sanctum')->post('/edituser', [UserController::class, 'ed
 
 
 Route::middleware('auth:sanctum')->get('/fields', [FLController::class, 'getFields']);
+
 Route::middleware('auth:sanctum')->get('/languages', [FLController::class, 'getLanguages']);
 
 Route::middleware('auth:sanctum')->post('/update-field', [FLController::class, 'updateField']);
@@ -51,8 +53,9 @@ Route::middleware('auth:sanctum')->post('/upload-field-image', [FLController::cl
 Route::middleware('auth:sanctum')->post('/upload-lesson-image', [FLController::class, 'saveLessonImage']);
 Route::middleware('auth:sanctum')->post('/upload-lesson-words', [FLController::class, 'saveLessonWords']);
 Route::middleware('auth:sanctum')->post('/add-lesson', [FLController::class, 'addLesson']);
-Route::middleware('auth:sanctum')->post('/get-lessons-cards', [FLController::class, 'getLessonsCards']);
+//Route::middleware('auth:sanctum')->post('/get-lessons-cards', [FLController::class, 'getLessonsCards']);
 Route::middleware('auth:sanctum')->post('/get-lessons-cards-by-field', [FLController::class, 'getLessonsCardsByField']);
+Route::middleware('auth:sanctum')->post('/update-lessons-orders', [FLController::class, 'updateLessonsOrders']);
 
 Route::middleware('auth:sanctum')->post('/selected-fields', [FLController::class, 'getLessonFields']);
 Route::middleware('auth:sanctum')->post('/get-lesson', [FLController::class, 'getLesson']);
@@ -87,6 +90,10 @@ Route::middleware('auth:sanctum')->post('/update-test-asses', [FLController::cla
 Route::middleware('auth:sanctum')->post('/get-lesson-test-asses', [FLController::class, 'getLessonTestAsses']);
 Route::middleware('auth:sanctum')->post('/archive-lesson', [FLController::class, 'archiveLesson']);
 Route::middleware('auth:sanctum')->post('/change-lesson-status', [FLController::class, 'changeLessonStatus']);
+
+Route::middleware('auth:sanctum')->post('/get-user-fields', [FLUController::class, 'getUserFields']);
+Route::middleware('auth:sanctum')->post('/get-user-lessons-by-field', [FLUController::class, 'getUserLessonsByField']);
+Route::middleware('auth:sanctum')->post('/upload-user-fields', [FLUController::class, 'uploadUserFields']);
 
 
 

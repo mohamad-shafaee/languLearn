@@ -17,13 +17,16 @@ class Field extends Model
         'author_id',
         'description',
         'img_path',
+        'has_order',
+        'category',
     ];
 
     public function lessons()
     {
         return $this->belongsToMany(Lesson::class, 'field_lessons')
-        ->using(FieldLesson::class)
-        ->withPivot('order')
+        ->withPivot('lesson_order')
+        ->orderBy('field_lessons.lesson_order')
+        ->using(FieldLesson::class) 
         ->withTimestamps();
     }
 

@@ -9,6 +9,7 @@ use App\Models\Language;
 use App\Models\Word;
 use App\Models\WordMean;
 use App\Models\FieldLesson;
+//use App\Models\FieldUser;
 use App\Models\TestWrite;
 use App\Models\TestAss;
 use App\Models\TestFill;
@@ -31,6 +32,8 @@ class FLController extends Controller
         $langs = Language::select('id', 'code', 'name', 'direction')->get();
         return response()->json(['languages' => $langs]);
     }
+
+    
 
     public function getFields(Request $request){
 
@@ -164,7 +167,7 @@ class FLController extends Controller
         FieldLesson::where('lesson_id', $lesson_id)->delete();
         //$exists = FieldLesson::where('lesson_id', $lesson_id)->where('field_id', $validated['field_id'])->exists();
         //if(!$exists){
-        FieldLesson::create(['field_id'=> $validated['field_id'], 'lesson_id' => $lesson_id, 'order'=> 1]);
+        FieldLesson::create(['field_id'=> $validated['field_id'], 'lesson_id' => $lesson_id]);
         //} 
         return response()->json(['success' => true, 'id'=>$lesson_id]);
         } else {
@@ -188,7 +191,7 @@ class FLController extends Controller
               FieldLesson::where('lesson_id', $lesson_id)->delete();
               //$exists = FieldLesson::where('lesson_id', $lesson_id)->where('field_id', $validated['field_id'])->exists();
         //if(!$exists){
-        FieldLesson::create(['field_id'=> $validated['field_id'], 'lesson_id' => $lesson_id, 'order'=> 1]);
+        FieldLesson::create(['field_id'=> $validated['field_id'], 'lesson_id' => $lesson_id]);
         //}
             return response()->json(['success' => true, 'id'=>$lesson_id]);
         }
@@ -234,7 +237,7 @@ class FLController extends Controller
 
             $fields = $request->input('fields'); // this will be an array
              foreach ($fields as $field) {
-                FieldLesson::create(['field_id'=> $field['id'], 'lesson_id' => $validated['lessonId'], 'order'=> 1]);
+                FieldLesson::create(['field_id'=> $field['id'], 'lesson_id' => $validated['lessonId']]);
             }
  
             return response()->json(['success' => true]); 
@@ -422,7 +425,7 @@ class FLController extends Controller
         
     }
 
-    public function getLessonsCards(Request $request){
+    /*public function getLessonsCards(Request $request){
 
         $validated = $request->validate([
             'fieldId' => ['nullable', 'integer'],
@@ -446,14 +449,13 @@ class FLController extends Controller
         'abstract' => $lesson->abstract,
         'fields' => $lesson->fields->map(fn($field) => [
             'id' => $field->id,
-            'name' => $field->name,
-            'order' => $field->pivot->order, // pivot field
+            'name' => $field->name, 
         ]),
         'status' => $lesson->status,
         ];
        });
         return response()->json($result); 
-    }
+    }*/
 
     public function getLessonFields(Request $request){
 
@@ -779,11 +781,17 @@ class FLController extends Controller
         $lessons = Lesson::whereIn('status', ['raw', 'published'])
         ->whereHas('fields', function ($query) use ($f_id) {
         $query->where('id', $f_id);
-        })->with(['author:id,name','fields:id,name'])
+        })->with(['author:id,name',
+                  'fields' => function ($q) use ($f_id) {
+                        $q->where('fields.id', $f_id)
+                        ->select('fields.id') // minimal
+                        ->withPivot('lesson_order');
+        }])
           ->select('id', 'author_id', 'title', 'img_path', 'abstract', 'status')
           ->get();
 
         $result = $lessons->map(function ($lesson) {
+            $field = $lesson->fields->first(); // only one exists
             return [
         'id' => $lesson->id,
         'author_id' => $lesson->author_id,
@@ -791,15 +799,27 @@ class FLController extends Controller
         'title' => $lesson->title,
         'img_path' => $lesson->img_path,
         'abstract' => $lesson->abstract,
-        'fields' => $lesson->fields->map(fn($field) => [
-            'id' => $field->id,
-            'name' => $field->name,
-            'order' => $field->pivot->order, // pivot field
-        ]),
+        'order' => $field?->pivot->lesson_order,
         'status' => $lesson->status,
         ];
        });
         return response()->json($result); 
+    }
+
+    public function updateLessonsOrders(Request $request){
+        $validated = $request->validate([
+            'fieldId' => ['required', 'integer'],
+            'lessons' => ['required', 'array', 'min:1'],    
+        ]);
+        DB::transaction(function () use ($validated) {
+          foreach ($validated['lessons'] as $lesson) {
+          FieldLesson::where('field_id', $validated['fieldId'])
+            ->where('lesson_id', $lesson['id'])
+            ->update([
+                'lesson_order' => $lesson['order'], // start from 1
+            ]);
+         }
+        });
     }
 
 

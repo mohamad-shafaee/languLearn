@@ -39,8 +39,8 @@ class Lesson extends Model
     public function fields()
     {
         return $this->belongsToMany(Field::class, 'field_lessons')
-        ->using(FieldLesson::class)
-        ->withPivot('order')
+        ->withPivot('lesson_order')
+        ->using(FieldLesson::class) 
         ->withTimestamps();
     }
 

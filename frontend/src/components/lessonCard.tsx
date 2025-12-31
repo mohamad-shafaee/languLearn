@@ -14,9 +14,11 @@ const statusStyles = {
   raw: "bg-pink-50 border-2 border-pink-200",
 };
  
-  return (
-    
-    <div className={`flex px-2 w-full rounded-md ${statusStyles[props.item.status]}`}>
+  return (<div className={`flex px-2 w-full rounded-md ${statusStyles[props.item.status]}`}>
+    {props.sortable && (<div className="flex w-16 h-fit border-2 border-gray-300 rounded-md my-4">
+      <input type="text" value={props.item.order ?? ""}
+      className="flex bg-[#fff] w-full h-fit text-xs font-bold px-2 py-2 rounded-md"
+      placeholder="order" onChange={(e) => {props.onSorti(props.item, e.target.value)}}/></div>)}
     <img src={props.item.img_path || null} alt="Lesson Image"
           className="flex w-12 h-12 rounded-md ml-2 mt-4"/>
     <div className="flex flex-col py-2 px-4 w-[calc(70%-18px)] ">
@@ -39,17 +41,8 @@ const statusStyles = {
        hover:bg-gray-50" onClick={() => props.onRemovei(props.item)}>Remove</div>
        <div className="flex w-fit text-xs px-4 py-1 my-1 mr-4 border-2 border-gray-300 rounded-md bg-gray-100 hover:cursor-pointer
        hover:bg-gray-50" onClick={() => {}}>Preview</div>
-    </div>  
-
-
-    </div>
-    
-
-       
-     
-      </div>
-
-
-        );
+    </div> 
+    </div> 
+    </div>);
 }
  
