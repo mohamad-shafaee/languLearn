@@ -108,13 +108,36 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
         );
     } 
 
-    public function sendVerificationEmail(){
+    public function sendVerificationEmail() {
         $url = $this->verificationUrl();
         Mail::to($this->email)
         ->send(new VerificationMail($this->name, $url));
         return 'sent';
         
     }
+
+    public function subscriptions() {
+        return $this->hasMany(Subscription::class);
+       }
+
+    public function activeSubscription() {
+       return $this->subscriptions()
+        ->where('status', 'active')
+        ->where('ends_at', '>', now())
+        ->first();
+    }
+
+    public function isPremium(): bool {
+        //return (bool) $this->activeSubscription();
+        return true;
+      }
+
+    public function uiWords()
+    {
+    return $this->hasMany(UIWord::class);
+     }
+
+    
 
 
 

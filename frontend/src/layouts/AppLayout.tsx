@@ -6,7 +6,8 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <>
       <Header />
-      <main className="block items-center justify-center min-h-screen w-full bg-gray-50 text-gray-800 overflow-x-hidden">{children}</main>
+      <main className="flex flex-col justify-center min-h-screen
+       w-full bg-white text-gray-800 overflow-x-hidden">{children}</main>
       <Footer />
     </>
   );

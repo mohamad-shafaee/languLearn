@@ -5,6 +5,7 @@ interface User {
   name: string;
   email: string;
   type: string;
+  is_premium: boolean;
 }
 
 interface AuthContextType {
@@ -38,15 +39,26 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState<string | null>(null); 
+  //const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(() => {
+  return localStorage.getItem("auth_token");
+}); 
 
   // Fetch user when app starts (if session cookie/token is valid)
   useEffect(() => {
-    const savedToken = localStorage.getItem("auth_token");
+
+    if (!token) {
+    setUser(null);
+    setLoading(false);
+    return;
+  }
+
+
+    /*const savedToken = localStorage.getItem("auth_token");
     if(savedToken && !token){
       setToken(savedToken);
       return;
-    }  /*double save with loginWithToken()*/
+    }*/  /*double save with loginWithToken()*/
 
       const fetchUser = async () => {
         try { 
@@ -77,7 +89,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                        setLoading(false);
       }
     }; 
-     if(token){fetchUser();} else {setLoading(false);}
+     fetchUser();
+     //if(token){fetchUser();} else {setLoading(false);}
   }, [token]); 
 
   // Register
@@ -270,7 +283,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const changePasswordLogedin = async (email, oldPassword, password, confirmPassword) => {
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/chang-password-logedin`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/change-password-logedin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -295,7 +308,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider 
-      value={{ user, setUser, token, setToken, loading, register, login, logout, requestPassReset, setNewPassword, changePasswordLogedin }}>
+      value={{ user, setUser, token, setToken, loading, register, login, logout,
+       requestPassReset, setNewPassword, changePasswordLogedin }}>
       {children}
     </AuthContext.Provider>
   );

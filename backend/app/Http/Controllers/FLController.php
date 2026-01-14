@@ -15,6 +15,10 @@ use App\Models\TestAss;
 use App\Models\TestFill;
 use App\Models\TestReply;
 use App\Models\TestTf;
+use App\Models\UIWord;
+use App\Models\DefDetectTest;
+use App\Models\WdmTest;
+use App\Models\TechWord;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -391,14 +395,9 @@ class FLController extends Controller
             return response()->json(['success'=> true, 'imageUrl' => $med_url]);
     }
 
-    public function saveLessonWords(Request $request){
+    /*public function saveLessonWords(Request $request){
         $lessonId = $request->input('lesson_id');
-        $words = $request->input('words');
-        // first remove all words of the lesson previously saved.
-        /*DB::transaction(function () use ($lessonId) {
-            WordMean::where('lesson_id', $lessonId)->delete();
-            Word::where('lesson_id', $lessonId)->delete(); 
-        });*/
+        $words = $request->input('words'); 
 
         DB::transaction(function () use ($lessonId, $words) {
             WordMean::where('lesson_id', $lessonId)->delete();
@@ -409,11 +408,6 @@ class FLController extends Controller
                                   'phonetic'=>$w['phonetic']]);
                 foreach ($w['means'] as $mean) {
 
-                    /*$language = Language::where(
-                        'code',
-                        $mean['language']
-                    )->firstOrFail();*/
-
                     WordMean::create(['lesson_id'=>$lessonId,
                                       'word_id' => $word->id,
                                       'language_id' => $mean['language_id'],
@@ -423,6 +417,77 @@ class FLController extends Controller
     });
     return response()->json(['success' => true]);
         
+    }*/
+
+    
+    public function saveLessonTechWords(Request $request){
+        $validated = $request->validate([
+        'lessonId' => ['required', 'integer'/*, 'exists:lessons,id'*/],
+        'words' => ['nullable', 'array'],
+        'words.*.id' => ['required', 'integer'],
+        'words.*.part' => ['required', 'integer'],
+        'words.*.word' => ['required', 'string'],
+        'words.*.mean' => ['nullable', 'string'],
+        'words.*.phonetic' => ['nullable', 'string'],
+        'removed' => ['nullable', 'array'],
+        'removed.*.id' => ['required', 'integer'],
+         ]);
+
+        $lessonId = $validated['lessonId'];
+        $words = $validated['words'];
+
+        DB::transaction(function () use ($lessonId, $words) {
+            
+            foreach ($words as $w) {
+            $word = TechWord::where('id', $w['id'])->update([
+                                  'part' => $w['part'],
+                                  'word' => $w['word'],
+                                  'phonetic'=>$w['phonetic'],
+                                  'mean' => $w['mean']
+                                   ]);
+
+              }
+           });
+           foreach ($validated['removed'] as $word) {
+              TechWord::where('id', $word['id'])->delete();
+           }
+           return response()->json(['success' => true]); 
+    }
+
+    public function saveLessonWords(Request $request){
+        $validated = $request->validate([
+        'lessonId' => ['required', 'integer'/*, 'exists:lessons,id'*/],
+        'words' => ['nullable', 'array'],
+        'words.*.id' => ['required', 'integer'],
+        'words.*.word' => ['required', 'string'],
+        'words.*.means' => ['nullable', 'array'],
+        'words.*.phonetic' => ['nullable', 'string'],
+        'removed' => ['nullable', 'array'],
+        'removed.*.id' => ['required', 'integer'],
+         ]);
+
+        $lessonId = $validated['lessonId'];
+        $words = $validated['words'];
+
+        DB::transaction(function () use ($lessonId, $words) {
+            WordMean::where('lesson_id', $lessonId)->delete();
+            foreach ($words as $w) {
+            $word = Word::where('id', $w['id'])->update([
+                                  'word' => $w['word'],
+                                  'phonetic'=>$w['phonetic'],
+                                   ]);
+            foreach ($w['means'] as $mean) {
+                    WordMean::create(['lesson_id'=>$lessonId,
+                                      'word_id' => $w['id'],
+                                      'language_id' => $mean['language_id'],
+                                      'mean' => $mean['mean'] ]);
+                }
+              }
+           });
+           foreach ($validated['removed'] as $word) {
+              Word::where('id', $word['id'])->delete();
+           }
+           return response()->json(['success' => true]); 
     }
 
     /*public function getLessonsCards(Request $request){
@@ -476,10 +541,73 @@ class FLController extends Controller
 
     public function getWords(Request $request){
         
-        $words = Word::where('lesson_id', $request->lessonId)->with('means:id,word_id,language_id,mean')
+        $words = Word::where('lesson_id', $request->lessonId)
+        ->with('means:id,word_id,language_id,mean')
         ->select('id', 'word', 'phonetic')->get();
 
         return response()->json(['words' => $words]);
+    }
+
+    public function getTechWords(Request $request){
+        
+        $words = TechWord::where('lesson_id', $request->lessonId)
+        ->select('id', 'part', 'word', 'phonetic', 'mean')->get();
+
+        return response()->json(['words' => $words]);
+    }
+
+    public function getRawDDTestId(Request $request){
+        $validated = $request->validate([
+            'authorId' => ['required', 'integer'],
+            'lessonId' => ['required', 'integer'],
+        ]);
+        $lesson_exists = Lesson::where('id', $validated['lessonId'])->exists();
+        if(!$lesson_exists){
+            return response()->json(['success' => false]);
+        }
+        $test = DefDetectTest::create(['lesson_id'=>$validated['lessonId'], 'word'=>'', 'text1'=>'', 'text2'=>'', 'text3'=>'', 'answer'=>0]);
+        return response()->json(['success' => true, 'id' => $test->id]);
+    }
+
+    public function getRawWdmTestId(Request $request){
+        $validated = $request->validate([
+            'authorId' => ['required', 'integer'],
+            'lessonId' => ['required', 'integer'],
+        ]);
+        $lesson_exists = Lesson::where('id', $validated['lessonId'])->exists();
+        if(!$lesson_exists){
+            return response()->json(['success' => false]);
+        }
+        $test = WdmTest::create(['lesson_id'=>$validated['lessonId'], 'body'=>'', 'answer'=>'']);
+        return response()->json(['success' => true, 'id' => $test->id]);
+    }
+
+    public function getRawWordId(Request $request){
+        $validated = $request->validate([
+            'authorId' => ['required', 'integer'],
+            'lessonId' => ['required', 'integer'],
+        ]);
+        $lesson_exists = Lesson::where('id', $validated['lessonId'])->exists();
+        if(!$lesson_exists){
+            return response()->json(['success' => false]);
+        }
+        $word = Word::create(['lesson_id'=>$validated['lessonId'],
+         'word'=>'', 'phonetic'=>'']);
+        return response()->json(['success' => true, 'id' => $word->id]);
+    }
+
+    public function getRawTechWordId(Request $request){
+        $validated = $request->validate([
+            'authorId' => ['required', 'integer'],
+            'lessonId' => ['required', 'integer'],
+        ]);
+        $lesson_exists = Lesson::where('id', $validated['lessonId'])->exists();
+        if(!$lesson_exists){
+            return response()->json(['success' => false]);
+        }
+        $word = TechWord::create(['lesson_id'=>$validated['lessonId'],
+         'word'=>'', 'phonetic'=>'']);
+        return response()->json(['success' => true, 'id' => $word->id]);
     }
 
     public function getRawTestWriteId(Request $request){
@@ -523,10 +651,8 @@ class FLController extends Controller
 
     public function getLessonTestWrites(Request $request){
         $tests = TestWrite::where('lesson_id', $request->lessonId)
-        ->select('id', 'body')->get();
-
-        return response()->json(['tests' => $tests]);
-
+        ->select('id', 'body')->get(); 
+        return response()->json(['tests' => $tests]); 
     }
 
     public function getRawTestFillId(Request $request){
@@ -682,6 +808,73 @@ class FLController extends Controller
     return response()->json(['success' => true]);
     }
 
+        public function updateDDTests(Request $request){
+        $validated = $request->validate([
+        'authorId' => ['required', 'integer'],
+        'lessonId' => ['required', 'integer'],
+        'tests' => ['nullable', 'array'],
+        'tests.*.id' => ['required', 'integer'],
+        'tests.*.word' => ['nullable', 'string'],
+        'tests.*.part' => ['nullable', 'integer'],
+        'tests.*.text1' => ['nullable', 'string'],
+        'tests.*.text2' => ['nullable', 'string'],
+        'tests.*.text3' => ['nullable', 'string'],
+        'tests.*.answer' => ['nullable', 'integer'],
+        'removed' => ['nullable', 'array'],
+        'removed.*.id' => ['required', 'integer'],
+        'removed.*.word' => ['nullable', 'string'],
+        'removed.*.part' => ['required', 'integer'],
+        'removed.*.text1' => ['nullable', 'string'],
+        'removed.*.text2' => ['nullable', 'string'],
+        'removed.*.text3' => ['nullable', 'string'],
+        'removed.*.answer' => ['nullable', 'integer'],
+    ]);
+
+        foreach ($validated['tests'] as $test) {
+        DefDetectTest::where('id', $test['id'])->update([
+             'word'=> $test['word'], 'part'=> $test['part'], 'text1'=> $test['text1'],
+              'text2'=> $test['text2'],
+             'text3'=> $test['text3'], 'answer' => $test['answer']
+        ]);
+    }
+
+    foreach ($validated['removed'] as $test) {
+        DefDetectTest::where('id', $test['id'])->delete();
+    }
+
+    return response()->json(['success' => true]);
+    }
+
+    public function updateWdmTests(Request $request){
+        $validated = $request->validate([
+        'authorId' => ['required', 'integer'],
+        'lessonId' => ['required', 'integer'],
+        'tests' => ['nullable', 'array'],
+        'tests.*.id' => ['required', 'integer'],
+        'tests.*.part' => ['nullable', 'integer'],
+        'tests.*.body' => ['nullable', 'string'],
+        'tests.*.answer' => ['nullable', 'string'],
+        'removed' => ['nullable', 'array'],
+        'removed.*.id' => ['required', 'integer'],
+        'removed.*.word' => ['nullable', 'string'],
+        'removed.*.part' => ['required', 'integer'],
+        'removed.*.body' => ['nullable', 'string'],
+        'removed.*.answer' => ['nullable', 'string'],
+    ]);
+
+        foreach ($validated['tests'] as $test) {
+        WdmTest::where('id', $test['id'])->update([
+             'body'=> $test['body'], 'part'=> $test['part'], 'answer' => $test['answer']
+        ]);
+    }
+
+    foreach ($validated['removed'] as $test) {
+        WdmTest::where('id', $test['id'])->delete();
+    }
+
+    return response()->json(['success' => true]);
+    }
+
     public function getLessonTestReplies(Request $request){
 
         $tests = TestReply::where('lesson_id', $request->lessonId)
@@ -690,6 +883,20 @@ class FLController extends Controller
 
         return response()->json(['tests' => $tests]);
 
+    }
+
+    public function getLessonDDTests(Request $request){
+
+        $tests = DefDetectTest::where('lesson_id', $request->lessonId)
+        ->select('id', 'word', 'part', 'text1', 'text2', 'text3', 'answer')->get();
+        return response()->json(['tests' => $tests]);
+    }
+
+    public function getLessonWdmTests(Request $request){
+
+        $tests = WdmTest::where('lesson_id', $request->lessonId)
+        ->select('id', 'part', 'body', 'answer')->get();
+        return response()->json(['tests' => $tests]);
     }
 
     public function getRawTestAssId(Request $request){
@@ -820,6 +1027,38 @@ class FLController extends Controller
             ]);
          }
         });
+    }
+
+    public function getInteractiveWords(Request $request){
+        $validated = $request->validate([
+            'userId' => ['required', 'integer'],
+            'lessonId' => ['required', 'integer'],
+            'fieldId' => ['required', 'integer'],
+        ]);
+
+        $userId = auth()->id();
+        $words = UIWord::query()
+        ->where('lesson_id', $validated['lessonId'])
+        ->select(
+            'word',
+            'word_id',
+            DB::raw('COUNT(*) as count'),
+            DB::raw(
+                'MAX(CASE WHEN user_id = ' . (int) $userId . ' THEN 1 ELSE 0 END) as user_selected'
+            )
+        )
+        ->groupBy('word', 'word_id')
+        ->get()
+        ->map(function ($item) {
+            return [
+                'word'          => $item->word,
+                'word_id'       => $item->word_id,
+                'count'         => (int) $item->count,
+                'user_selected' => (bool) $item->user_selected,
+            ];
+        });
+
+        return response()->json(['words'=>($words ?? [])]);
     }
 
 

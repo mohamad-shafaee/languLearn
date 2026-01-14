@@ -14,7 +14,8 @@ class UserTtw extends Model
     protected $fillable = [
         'user_id',
         'lesson_id',
-        'word',
+        'part',
+        'word_id',
         'status',
         'learned',
     ];

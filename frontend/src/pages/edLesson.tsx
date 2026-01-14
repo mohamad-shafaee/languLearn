@@ -3,8 +3,10 @@ import { useAuth } from "../auth";
 import CustomObjSelect from "../components/customObjSelect";
 import FieldSelector from "../components/fieldSelector";
 import WordInfo from "../components/wordInfo";
+import TechWordInfo from "../components/techwordInfo";
 import { Pencil, Edit, Save } from "lucide-react";
-import type { WordObj, Language, TestWrite, TestTF, TestReply, TestFill, TestAss } from "../types";
+import type { Language, TestWrite, TestTF, TestReply,
+ TestFill, TestAss, DefDetectTest, WdmTest } from "../types";
 import { v4 as uuidv4 } from 'uuid';
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
@@ -28,9 +30,25 @@ type Lesson = {
   text_p23: string | null;
   text_p24: string | null;
   text_p25: string | null;
-} 
 
+}
  
+ type WordObj = {
+  id: string;
+  word: string;
+  phonetic: string | null;
+  means: Mean[];
+ }
+
+ type TechWordObj = {
+  id: string;
+  part: number;
+  word: string;
+  phonetic: string | null;
+  mean: string;
+ }
+
+
 const EdLesson: React.FC = () => {
   const { lessonId } = useParams();
 	const { user, token } = useAuth();
@@ -57,10 +75,16 @@ const EdLesson: React.FC = () => {
   const [step, setStep] = useState(1);
   const [languages, setLanguages] = useState<Language[]>([]);
  
-  const next = () => setStep((s) => Math.min(s + 1, 13));
+  const next = () => setStep((s) => Math.min(s + 1, 11));
   const prev = () => setStep((s) => Math.max(s - 1, 1));
 
-  const [words, setWords] = useState<WordObj[]>([{ id: uuidv4(), word: "", phonetic: "", means: [] }]);
+  //const [words, setWords] = useState<WordObj[]>([{ id: uuidv4(), word: "", phonetic: "", means: [] }]);
+  const [words, setWords] = useState<WordObj[]>([]);
+  const [removedWords, setRemovedWords] = useState<WordObj[]>([]);
+  
+  const [techWords, setTechWords] = useState<TechWordObj[]>([]);
+  const [removedTechWords, setRemovedTechWords] = useState<TechWordObj[]>([]);
+
   const [testWrites, setTestWrites] = useState<TestWrite[]>([]);
   const [removedTestWrites, setRemovedTestWrites] = useState<TestWrite[]>([]);
   const [testFills, setTestFills] = useState<TestFill[]>([]);
@@ -69,6 +93,12 @@ const EdLesson: React.FC = () => {
   const [removedTestTFs, setRemovedTestTFs] = useState<TestTF[]>([]);
   const [testReplies, setTestReplies] = useState<TestReply[]>([]);
   const [removedTestReplies, setRemovedTestReplies] = useState<TestReply[]>([]);
+
+  const [defDetectTests, setDefDetectTests] = useState<DefDetectTest[]>([]);
+  const [removedDefDetectTests, setRemovedDefDetectTests] = useState<DefDetectTest[]>([]);
+
+  const [wdmTests, setWdmTests] = useState<WdmTest[]>([]);
+  const [removedWdmTests, setRemovedWdmTests] = useState<WdmTest[]>([]);
   
   const [testAsses, setTestAsses] = useState<TestAss[]>([]);
   const [removedTestAsses, setRemovedTestAsses] = useState<TestAss[]>([]);
@@ -79,7 +109,10 @@ const EdLesson: React.FC = () => {
   const [testRepliesStatus, setTestRepliesStatus] = useState<boolean>(false);
   const [testAssesStatus, setTestAssesStatus] = useState<boolean>(false);
   const [saveWordsStatus, setSaveWordsStatus] = useState<boolean>(false);
+  const [saveTechWordsStatus, setSaveTechWordsStatus] = useState<boolean>(false);
   const [saveLessonStatus, setSaveLessonStatus] = useState<boolean>(false);
+  const [dDTestStatus, setDDTestStatus] = useState<boolean>(false);
+  const [wdmTestStatus, setWdmTestStatus] = useState<boolean>(false);
 
   useEffect(() => {
 
@@ -172,6 +205,32 @@ const EdLesson: React.FC = () => {
         
       } else {
         alert("The words of the lesson are not taken!");
+        
+      }
+    } catch (err) {
+      
+    } finally{//setIsSubmitting(false);
+    }
+  };
+
+    const getTechWords = async ()=>{
+    try {
+      //setIsSubmitting(true); // problematic 
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-lesson-tech-words`, {
+        method: "POST",
+         headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Authorization": `Bearer ${token}`, //send token here
+            },
+              body: JSON.stringify({ lessonId: lessonId, })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTechWords(data.words);
+        
+      } else {
+        alert("The technical words of the lesson are not taken!");
         
       }
     } catch (err) {
@@ -316,6 +375,46 @@ const EdLesson: React.FC = () => {
     };
   };
 
+  const getDefDetectTests = async ()=>{
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-lesson-defdetect-tests`, {
+        method: "POST",
+         headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Authorization": `Bearer ${token}`, //send token here
+            },
+              body: JSON.stringify({ lessonId: lessonId, })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setDefDetectTests(data.tests);
+      } else {
+        alert("Definition defective tests of the lesson are not taken!"); 
+      }
+    } catch (err) {} finally{}
+  };
+
+    const getWdmTests = async ()=>{
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-lesson-wdm-tests`, {
+        method: "POST",
+         headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Authorization": `Bearer ${token}`, //send token here
+            },
+              body: JSON.stringify({ lessonId: lessonId, })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setWdmTests(data.tests);
+      } else {
+        alert("Why does it matters tests of the lesson are not taken!"); 
+      }
+    } catch (err) {} finally{}
+  };
+
 
   if(lessonId == 'create'){
     requestAndSetLessonId(); 
@@ -325,11 +424,14 @@ const EdLesson: React.FC = () => {
         getFields();
         getSelectedFields();
         getWords();
+        getTechWords();
         getTestWrites();
         getTestFills();
         getTestTFs();
         getTestReplies();
         getTestAsses();
+        getDefDetectTests();
+        getWdmTests();
 
     }
 
@@ -358,44 +460,41 @@ const EdLesson: React.FC = () => {
         getLanguages();
 
   }, []);
-
-
- 
+  
   // Update a single word by id
   function updateWord(id: number, updatedWord: WordObj) {
     setWords(prev =>
-      prev.map(word => (word.id === id ? updatedWord : word))
+      prev.map(word => (word.id == id ? updatedWord : word))
     );
     setSaveWordsStatus(true);
   }
 
-  // Remove a word by index
-  function removeWord(id: number) {
-    const confirmed = window.confirm("Are you sure to remove the word?");
-  if (confirmed) {
-     setWords(prev => {
-    const newWords = prev.filter(word => word.id !== id);
-    if (newWords.length < 1) {
-      return [createEmptyWord()];
-    }
-    return newWords;
-  });
+  function updateTechWord(id: number, updatedWord: WordObj) {
+    setTechWords(prev =>
+      prev.map(word => (word.id == id ? updatedWord : word))
+    );
+    setSaveTechWordsStatus(true);
   }
-  setSaveWordsStatus(true);
- 
+
+function removeWord(id: number) {
+  const confirmed = window.confirm("Are you sure to remove the word?");
+  if (confirmed) {
+     setRemovedWords(prev => prev.some(wo => wo.id == id) ? prev : 
+      [...prev, words.find(w => w.id == id)]);
+     setWords(words.filter(wo => wo.id == id));
+     setSaveWordsStatus(true);
+  } 
 }
 
-  const createEmptyWord = (): WordObj => ({
-     id: uuidv4(),
-     word: "",
-     phonetic: "",
-     means: []
-    });
-
-const newWord = async () => {
-  setWords(prev => [...prev, createEmptyWord()]);
-  setSaveWordsStatus(true);
-}; 
+function removeTechWord(id: number) {
+  const confirmed = window.confirm("Are you sure to remove the technical word?");
+  if (confirmed) {
+     setRemovedTechWords(prev => prev.some(wo => wo.id == id) ? prev : 
+      [...prev, words.find(w => w.id == id)]);
+     setTechWords(words.filter(wo => wo.id == id));
+     setSaveTechWordsStatus(true);
+  } 
+} 
 
 const submitWords = async () => {
 
@@ -404,10 +503,10 @@ const submitWords = async () => {
   return;
  }
 
- if(words.filter(w => (w.word !== "" && w.means.length >= 1)).length == 0){
+ /*if(words.filter(w => (w.word !== "" && w.means.length >= 1)).length == 0){
   alert("Please complete words list.");
   return;
- }
+ }*/
 
  const words_1 = words.filter(w => (w.word != "" && w.means.length > 0));
  const words_2 = words_1.map(w => {
@@ -415,12 +514,11 @@ const submitWords = async () => {
   return {id: w.id, word: w.word, phonetic: w.phonetic, means: means_new};
  });
  const words_3 = words_2.filter(w => (w.means.length > 0));
-
-
+ 
   const payload = {
-     lesson_id: lesson.id,
+     lessonId: lesson.id,
      words: words_2,
-     //words: words
+     removed: removedWords,
   };
 
   //console.log(JSON.stringify(payload));
@@ -437,6 +535,7 @@ const submitWords = async () => {
       const data = await res.json();
 
       if (res.ok && data.success) {
+        setRemovedWords([]);
         alert("Words saved successfully.");
         
       } else {
@@ -449,7 +548,47 @@ const submitWords = async () => {
 };
 
 
+const submitTechWords = async () => {
 
+  if(lesson.id == null || lesson.id == undefined){
+  alert("Please save the lesson first. You should enter atleast lesson title");
+  return;
+ }
+
+ const words_1 = techWords.filter(w => (w.word != "" || w.mean != ""));
+ 
+  const payload = {
+     lessonId: lesson.id,
+     words: words_1,
+     removed: removedTechWords,
+  };
+
+  //console.log(JSON.stringify(payload));
+  try {
+      setIsSubmitting(true);
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/upload-lesson-tech-words`, {
+        method: "POST",
+        headers: {
+                   Authorization: `Bearer ${token}`,
+                   "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setRemovedTechWords([]);
+        alert("Technical words saved successfully.");
+        
+      } else {
+        alert("Failed to upload technical words.");
+      }
+    } catch (err) {
+      alert("Failed to upload technical words.");
+    } finally{setIsSubmitting(false); setSaveTechWordsStatus(false);}
+
+};
+ 
   const selectLessonImage = () => {
     imgRef.current.click(); // Open file picker
   };
@@ -562,6 +701,81 @@ const submitWords = async () => {
         setSelectedFields(new_fs);
   }
    setSaveLessonStatus(true);
+  };
+
+  ///////////////////
+
+  const newRawWord = async () => {
+    if(lesson.id == null || lesson.id == undefined){
+      alert("Please save the lesson first. You should enter atleast lesson title");
+      return;
+    }
+    try {
+      //setIsTakingTestId(true);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-raw-word-id`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": `Bearer ${token}`, //send token here
+        },
+        body: JSON.stringify({authorId: user.id,
+                              lessonId: lesson.id, 
+                              })
+      });
+      if (!response.ok) {
+        return; 
+          }
+      const result = await response.json();
+      if(result.success && result.id){        
+          setWords(prev =>
+          prev.some(w => w.id == result.id) ? prev 
+          : [...prev, { id: result.id,  word: "", phonetic: "", means: []}]
+         );
+        
+      } 
+    } catch {} finally {
+      //setIsTakingTestId(false);
+        setSaveWordsStatus(true);
+    };
+  };
+
+  ////////////////////
+
+
+  const newRawTechWord = async () => {
+    if(lesson.id == null || lesson.id == undefined){
+      alert("Please save the lesson first. You should enter atleast lesson title");
+      return;
+    }
+    try {
+      //setIsTakingTestId(true);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-raw-tech-word-id`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": `Bearer ${token}`, //send token here
+        },
+        body: JSON.stringify({authorId: user.id,
+                              lessonId: lesson.id, 
+                              })
+      });
+      if (!response.ok) {
+        return; 
+          }
+      const result = await response.json();
+      if(result.success && result.id){
+          setTechWords(prev =>
+          prev.some(w => w.id == result.id) ? prev 
+          : [...prev, { id: result.id, part: 0,  word: "", phonetic: "", mean: "" }]
+         );
+      } 
+    } catch {} finally {
+      //setIsTakingTestId(false);
+       setSaveTechWordsStatus(true); 
+      
+    };
   };
 
     ///////////////////////////
@@ -1092,6 +1306,219 @@ const submitWords = async () => {
   };
   /////////////////
 
+  const updateDDTestWord = (testObj, value) => {
+    setDefDetectTests(prev => prev.map(ddt => ddt.id == testObj.id ? {...ddt, word: value} : ddt));
+    setDDTestStatus(true);
+  };
+
+  const updateDDTestPart = (testObj, value) => {
+    setDefDetectTests(prev => prev.map(ddt => ddt.id == testObj.id ? {...ddt, part: value} : ddt));
+    setDDTestStatus(true);
+  };
+
+  const updateDDTestText1 = (testObj, value) => {
+    setDefDetectTests(prev => prev.map(ddt => ddt.id == testObj.id ? {...ddt, text1: value} : ddt));
+    setDDTestStatus(true);
+  };
+
+  const updateDDTestText2 = (testObj, value) => {
+    setDefDetectTests(prev => prev.map(ddt => ddt.id == testObj.id ? {...ddt, text2: value} : ddt));
+    setDDTestStatus(true);
+  };
+
+  const updateDDTestText3 = (testObj, value) => {
+    setDefDetectTests(prev => prev.map(ddt => ddt.id == testObj.id ? {...ddt, text3: value} : ddt));
+    setDDTestStatus(true);
+  };
+
+  const setDDTestAnswer = (testObj, value) => {
+    setDefDetectTests(prev => prev.map(ddt => ddt.id == testObj.id ? {...ddt, 
+      answer: value} : ddt));
+    setDDTestStatus(true);
+  };
+
+    const removeDDTest = (testObj) => {
+    const confirmed = window.confirm("Are you sure to remove the test?");
+  if (confirmed) {
+    setRemovedDefDetectTests(prev =>
+          prev.some(ddt => ddt.id == testObj.id) ? prev : [...prev, testObj]);
+
+    const newTests = defDetectTests.filter(ddt => ddt.id != testObj.id);
+    setDefDetectTests(newTests);
+    setDDTestStatus(true);
+    }
+  };
+
+      const newDDTest = async () => {
+
+      try {
+      setIsTakingTestId(true);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-raw-dd-test-id`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": `Bearer ${token}`, //send token here
+        },
+        body: JSON.stringify({authorId: user.id,
+                              lessonId: lesson.id ?? "", 
+                              })
+      });
+      if (!response.ok) {
+        return;
+            
+          }
+      const result = await response.json();
+      if(result.success && result.id){
+        setDefDetectTests(prev =>
+           [...prev, { id: result.id, word: "", part: 0,
+            text1: "", text2: "", text3: "", answer: 0}]
+         );
+       
+      } 
+    } catch {} finally {setIsTakingTestId(false); setDDTestStatus(true);};
+  };
+
+    const submitDDTest = async () => {
+    if(lesson.id == null || lesson.id == undefined){
+      alert("Please save the lesson first. You should enter atleast lesson title");
+      return;
+    }
+
+    if((defDetectTests.length + removedDefDetectTests.length) == 0){
+      alert("Please complete test list.");
+      return;
+ }
+
+  const ddTests_c = defDetectTests.filter(ddt => ((ddt.text1 != "")
+   || (ddt.text2 != "") || (ddt.text3 != "")));
+  const payload = {
+     authorId: user.id,
+     lessonId: lesson.id,
+     tests: ddTests_c,
+     removed: removedDefDetectTests,
+  };
+       try {
+      setIsSubmitting(true);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/update-dd-tests`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": `Bearer ${token}`, //send token here
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) {
+        return;
+          }
+      const result = await response.json();
+      if(result.success){
+        setRemovedDefDetectTests([]);
+        alert("Tests saved successfully.");
+      } 
+    } catch {} finally {setIsSubmitting(false); setDDTestStatus(false);};
+  };
+
+  ////////////////////////
+  const updateWdmTestBody = (testObj, value) => {
+    setWdmTests(prev => prev.map(wdmt => wdmt.id == testObj.id ? {...wdmt, body: value} : wdmt));
+    setWdmTestStatus(true);
+  };
+
+  const updateWdmTestPart = (testObj, value) => {
+    setWdmTests(prev => prev.map(wdmt => wdmt.id == testObj.id ? {...wdmt, part: value} : wdmt));
+    setWdmTestStatus(true);
+  };
+
+  const updateWdmTestAnswer = (testObj, value) => {
+    setWdmTests(prev => prev.map(wdmt => wdmt.id == testObj.id ? {...wdmt, answer: value} : wdmt));
+    setWdmTestStatus(true);
+  };
+
+  const removeWdmTest = (testObj) => {
+    const confirmed = window.confirm("Are you sure to remove the test?");
+  if (confirmed) {
+    setRemovedWdmTests(prev =>
+          prev.some(wdmt => wdmt.id == testObj.id) ? prev : [...prev, testObj]);
+
+    const newTests = wdmTests.filter(wdmt => wdmt.id != testObj.id);
+    setWdmTests(newTests);
+    setWdmTestStatus(true);
+    }
+  };
+
+      const newWdmTest = async () => {
+
+      try {
+      setIsTakingTestId(true);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-raw-wdm-test-id`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": `Bearer ${token}`, //send token here
+        },
+        body: JSON.stringify({authorId: user.id,
+                              lessonId: lesson.id ?? "", 
+                              })
+      });
+      if (!response.ok) {
+        return;
+            
+          }
+      const result = await response.json();
+      if(result.success && result.id){
+        setWdmTests(prev =>
+           [...prev, { id: result.id, part: 0, body: "", answer: ""}]
+         );
+       
+      } 
+    } catch {} finally {setIsTakingTestId(false); setWdmTestStatus(true);};
+  };
+
+    const submitWdmTest = async () => {
+    if(lesson.id == null || lesson.id == undefined){
+      alert("Please save the lesson first. You should enter atleast lesson title");
+      return;
+    }
+
+    if((wdmTests.length + removedWdmTests.length) == 0){
+      alert("Please complete test list.");
+      return;
+ }
+
+  const wdmTests_c = wdmTests.filter(wdmt => (wdmt.body != "" || wdmt.answer != ""));
+  const payload = {
+     authorId: user.id,
+     lessonId: lesson.id,
+     tests: wdmTests_c,
+     removed: removedWdmTests,
+  };
+       try {
+      setIsSubmitting(true);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/update-wdm-tests`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": `Bearer ${token}`, //send token here
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) {
+        return;
+          }
+      const result = await response.json();
+      if(result.success){
+        setRemovedWdmTests([]);
+        alert("Tests saved successfully.");
+      } 
+    } catch {} finally {setIsSubmitting(false); setWdmTestStatus(false);};
+  };
+
+  ////////////////////////////////
+
 	if (!user || user.type !== "admin") {
     return <div>You do not have access to this page!</div>;
   }
@@ -1131,58 +1558,68 @@ const submitWords = async () => {
       {setLesson({...lesson, video1: e.target.value}); setSaveLessonStatus(true);}}/>
     <textarea ref={video1TextRef} className="flex bg-[#fff] mt-4 px-2 py-1 w-1/3 border-2 border-gray-300"
                value={lesson?.video1_text ?? ""}
-                onChange={(e) => {setLesson({...lesson, video1_text: e.target.value}); setSaveLessonStatus(true);}}
+                onChange={(e) => {setLesson({...lesson, video1_text: e.target.value}); 
+                setSaveLessonStatus(true);}}
                 placeholder="Video Text" rows="6" cols="50"  disabled={isSubmitting}></textarea>
-    </div>)}
-
-    {step == 2 && (<div className="flex items-center flex-col w-full">
+    <div className="flex items-center flex-col w-full">
       <div className="flex w-fit mt-4 px-4 py-1 ">Technical Trem</div>
     <textarea ref={tTBRef} className="flex bg-[#fff] mt-4 px-2 py-1 w-1/3 border-2 border-gray-300"
                value={lesson?.tech_term_body ?? ""}
-                onChange={(e) => {setLesson({...lesson, tech_term_body: e.target.value}); setSaveLessonStatus(true); }}
-                placeholder="Technical Trem" rows="10" cols="50"  disabled={isSubmitting}>
-                  
+                onChange={(e) => {setLesson({...lesson, tech_term_body: e.target.value}); 
+                setSaveLessonStatus(true); }}
+                placeholder="Technical Trem" rows="10" cols="50"  disabled={isSubmitting}> 
     </textarea>
-    </div>)}
-    {step == 3 && (<div className="flex items-center flex-col w-full">
+    </div>
+    </div>)} 
+    {step == 2 && (<div className="flex items-center flex-col w-full">
+      <div className="flex items-center flex-col w-full">
       <div className="flex w-fit mt-4 px-4 py-1 ">Text 1, Page 2</div>
     <textarea ref={tP21Ref} className="flex bg-[#fff] mt-4 px-2 py-1 w-1/3 border-2 border-gray-300"
                value={lesson?.text_p21 ?? ""}
-                onChange={(e) => {setLesson({...lesson, text_p21: e.target.value}); setSaveLessonStatus(true); }}
+                onChange={(e) => {setLesson({...lesson, text_p21: e.target.value}); 
+                setSaveLessonStatus(true); }}
                 placeholder="Text 1, Page 2" rows="10" cols="50"  disabled={isSubmitting}>
     </textarea>
-    </div>)}
-    {step == 4 && (<div className="flex items-center flex-col w-full">
+    </div>
+    <div className="flex items-center flex-col w-full">
       <div className="flex w-fit mt-4 px-4 py-1 ">Text 2, Page 2</div>
     <textarea ref={tP22Ref} className="flex bg-[#fff] mt-4 px-2 py-1 w-1/3 border-2 border-gray-300"
                value={lesson?.text_p22 ?? ""}
-                onChange={(e) => {setLesson({...lesson, text_p22: e.target.value}); setSaveLessonStatus(true); }}
+                onChange={(e) => {setLesson({...lesson, text_p22: e.target.value}); 
+                setSaveLessonStatus(true); }}
                 placeholder="Text 2, Page 2" rows="10" cols="50"  disabled={isSubmitting}>
     </textarea>
-    </div>)}
-    {step == 5 && (<div className="flex items-center flex-col w-full">
+    </div>
+    <div className="flex items-center flex-col w-full">
       <div className="flex w-fit mt-4 px-4 py-1 ">Text 3, Page 2</div>
     <textarea ref={tP23Ref} className="flex bg-[#fff] mt-4 px-2 py-1 w-1/3 border-2 border-gray-300"
                value={lesson?.text_p23 ?? ""}
-                onChange={(e) => {setLesson({...lesson, text_p23: e.target.value}); setSaveLessonStatus(true); }}
+                onChange={(e) => {setLesson({...lesson, text_p23: e.target.value}); 
+                setSaveLessonStatus(true); }}
                 placeholder="Text 3, Page 2" rows="10" cols="50"  disabled={isSubmitting}>
     </textarea>
-    </div>)}
-    {step == 6 && (<div className="flex items-center flex-col w-full">
+    </div>
+    <div className="flex items-center flex-col w-full">
       <div className="flex w-fit mt-4 px-4 py-1 ">Text 4, Page 2</div>
     <textarea ref={tP24Ref} className="flex bg-[#fff] mt-4 px-2 py-1 w-1/3 border-2 border-gray-300"
                value={lesson?.text_p24 ?? ""}
-                onChange={(e) => {setLesson({...lesson, text_p24: e.target.value}); setSaveLessonStatus(true); }}
+                onChange={(e) => {setLesson({...lesson, text_p24: e.target.value}); 
+                setSaveLessonStatus(true); }}
                 placeholder="Text 4, Page 2" rows="10" cols="50"  disabled={isSubmitting}></textarea>
-    </div>)}
-    {step == 7 && (<div className="flex items-center flex-col w-full">
+    </div>
+    <div className="flex items-center flex-col w-full">
       <div className="flex w-fit mt-4 px-4 py-1 ">Text 5, Page 2</div>
     <textarea ref={tP25Ref} className="flex bg-[#fff] mt-4 px-2 py-1 w-1/3 border-2 border-gray-300"
                value={lesson?.text_p25 ?? ""}
-                onChange={(e) => {setLesson({...lesson, text_p25: e.target.value}); setSaveLessonStatus(true); }}
+                onChange={(e) => {setLesson({...lesson, text_p25: e.target.value}); 
+                setSaveLessonStatus(true); }}
                 placeholder="Text 5, Page 2" rows="10" cols="50"  disabled={isSubmitting}></textarea>  
-    </div>)}
-    {step == 8 && (<div className="flex justify-center mb-16 mt-4 items-end w-full">
+    </div>
+
+
+  </div>
+    )}
+    {step == 3 && (<div className="flex justify-center mb-16 mt-4 items-end w-full">
       <div className="flex flex-col justify-center items-center mt-8 w-1/3">
         <div className="flex w-fit mt-4 px-4 py-1 ">Words Of The Lesson</div>
     {words.length>0 && words.map((wordObj, index)=>{return(
@@ -1197,10 +1634,27 @@ const submitWords = async () => {
     <button type="button" 
       className="flex h-fit w-fit px-4 py-1 border-2 border-gray-200
        hover:cursor-pointer hover:bg-gray-100 ml-4 my-2" 
-              onClick={newWord}
+              onClick={()=>{newRawWord();}}
           disabled={isSubmitting}>New Word</button>
     </div>)}
-           {step == 9 && (<div className="flex justify-center mb-16 mt-4 items-end w-full">
+    {step == 4 && (<div className="flex justify-center mb-16 mt-4 items-end w-full">
+      <div className="flex flex-col justify-center items-center mt-8 w-1/3">
+        <div className="flex w-fit mt-4 px-4 py-1 ">Technical Terms (Words)</div>
+    {techWords.length>0 && techWords.map((wordObj, index)=>{return(
+      <div key={wordObj.id} className="flex flex-col my-2 w-full">
+        <div className="text-2xl text-blue-500">{index + 1}</div>
+        <TechWordInfo 
+           value={wordObj}
+           onAddWord={(u_word) => {updateTechWord(wordObj.id, u_word)}}
+           onRemoveWord={() => {removeTechWord(wordObj.id)}}/>
+  </div>) })} </div>
+    <button type="button" 
+      className="flex h-fit w-fit px-4 py-1 border-2 border-gray-200
+       hover:cursor-pointer hover:bg-gray-100 ml-4 my-2" 
+              onClick={()=>{newRawTechWord();}}
+          disabled={isSubmitting}>New Word</button>
+    </div>)}
+           {step == 5 && (<div className="flex justify-center mb-16 mt-4 items-end w-full">
       <div className="flex flex-col
        justify-center items-center mt-8 w-1/3">
         <div className="flex w-fit my-4 px-4 py-1 ">Test Write</div>
@@ -1222,7 +1676,94 @@ const submitWords = async () => {
               onClick={newTestWrite}
           disabled={isTakingTestId}>New Test</button>
     </div>)}
-  {step == 10 && (<div className="flex justify-center mb-16 mt-4 items-end w-full">
+    {step == 6 && (<div className="flex justify-center mb-16 mt-4 items-end w-full">
+      <div className="flex flex-col
+       justify-center items-center mt-8 w-1/3">
+        <div className="flex w-fit my-4 px-4 py-1 ">Definition Detective Tests</div>
+    {defDetectTests.length>0 && defDetectTests.map((testObj, index)=>{return(
+      <div key={testObj.id} className="flex flex-col border-1 border-blue-300 rounded-md my-2 w-full">
+        <div className="text-2xl text-blue-500 ml-4 mt-2">{index + 1}</div>
+        <div className="flex flex-col px-2 w-full">
+          <input type="text" value={testObj.part ?? ""}
+      className="flex bg-[#fff] px-2 py-1 w-1/3 border-2 border-gray-300 rounded-md mt-4"
+      placeholder="Part" onChange={(e) => updateDDTestPart(testObj, e.target.value)}
+    disabled={isSubmitting}/>
+          <input type="text" value={testObj.word ?? ""}
+      className="flex bg-[#fff] px-2 py-1 w-1/3 border-2 border-gray-300 rounded-md mt-4"
+      placeholder="Word" onChange={(e) => updateDDTestWord(testObj, e.target.value)}
+    disabled={isSubmitting}/></div>
+   <div className="flex px-2 w-full"><textarea 
+          className="flex w-[calc(100%-2rem)] bg-[#fff] mt-2 mr-2 px-2 py-1 border-2 
+          border-gray-300 rounded-md"
+        value={testObj.text1 ?? ""} onChange={(e) => updateDDTestText1(testObj, e.target.value)}
+                placeholder="Text 1" rows="4" cols="50"  disabled={isSubmitting}></textarea>
+                <div className="flex w-8">
+                  <input type="radio" name={`ddtest-${testObj.id}`} checked={testObj.answer == 1}
+               onChange={() => setDDTestAnswer(testObj, 1)}/></div></div>
+
+        <div className="flex px-2 w-full"><textarea 
+          className="flex w-[calc(100%-2rem)] bg-[#fff] mt-2 mr-2 px-2 py-1 
+          border-2 border-gray-300 rounded-md"
+        value={testObj.text2 ?? ""} onChange={(e) => updateDDTestText2(testObj, e.target.value)}
+                placeholder="Text 2" rows="4" cols="50"  disabled={isSubmitting}></textarea>
+                <div className="flex w-8">
+                  <input type="radio" name={`ddtest-${testObj.id}`} checked={testObj.answer == 2}
+               onChange={() => setDDTestAnswer(testObj, 2)}/></div></div>
+
+      <div className="flex px-2 w-full"><textarea 
+          className="flex w-[calc(100%-2rem)] bg-[#fff] mt-2 mr-2 px-2 py-1 
+          border-2 border-gray-300 rounded-md"
+        value={testObj.text3 ?? ""} onChange={(e) => updateDDTestText3(testObj, e.target.value)}
+                placeholder="Text 2" rows="4" cols="50"  disabled={isSubmitting}></textarea>
+                <div className="flex w-8">
+                  <input type="radio" name={`ddtest-${testObj.id}`} checked={testObj.answer == 3}
+               onChange={() => setDDTestAnswer(testObj, 3)}/></div></div>
+               <div className="flex bg-gray-50 px-4 py-2 w-full">
+                  <div className="flex w-fit px-2 py-1 border-2 
+                    border-red-300 flex bg-gray-150 hover:bg-gray-100
+                     rounded-md" onClick={()=>{removeDDTest(testObj)}}>Remove Test</div></div>
+  </div>) })} </div>
+    <button type="button" 
+      className="flex h-fit w-fit px-4 py-1 border-2 border-gray-200
+       hover:cursor-pointer hover:bg-gray-100 ml-4 my-2" 
+              onClick={newDDTest} disabled={isTakingTestId}>New Test</button>
+    </div>)}
+
+    {step == 7 && (<div className="flex justify-center mb-16 mt-4 items-end w-full">
+      <div className="flex flex-col
+       justify-center items-center mt-8 w-1/3">
+        <div className="flex w-fit my-4 px-4 py-1 ">Why Does It Matters Tests</div>
+    {wdmTests.length>0 && wdmTests.map((testObj, index)=>{return(
+      <div key={testObj.id} className="flex flex-col border-1 border-blue-300 rounded-md my-2 w-full">
+        <div className="text-2xl text-blue-500 ml-4 mt-2">{index + 1}</div>
+        <div className="flex flex-col px-2 w-full">
+          <input type="text" value={testObj.part ?? ""}
+      className="flex bg-[#fff] px-2 py-1 w-1/3 border-2 border-gray-300 rounded-md mt-4"
+      placeholder="Part" onChange={(e) => updateWdmTestPart(testObj, e.target.value)}
+    disabled={isSubmitting}/>
+          <textarea 
+          className="flex w-[calc(100%-2rem)] bg-[#fff] mt-2 mr-2 px-2 py-1 border-2 
+          border-gray-300 rounded-md"
+        value={testObj.body ?? ""} onChange={(e) => updateWdmTestBody(testObj, e.target.value)}
+                placeholder="Body" rows="4" cols="50"  disabled={isSubmitting}></textarea>
+          <textarea 
+          className="flex w-[calc(100%-2rem)] bg-[#fff] mt-2 mr-2 px-2 py-1 border-2 
+          border-gray-300 rounded-md"
+        value={testObj.answer ?? ""} onChange={(e) => updateWdmTestAnswer(testObj, e.target.value)}
+                placeholder="Answer" rows="4" cols="50"  disabled={isSubmitting}></textarea>
+          </div>
+               <div className="flex bg-gray-50 px-4 py-2 w-full">
+                  <div className="flex w-fit px-2 py-1 border-2 
+                    border-red-300 flex bg-gray-150 hover:bg-gray-100
+                     rounded-md" onClick={()=>{removeWdmTest(testObj)}}>Remove Test</div></div>
+  </div>) })} </div>
+    <button type="button" 
+      className="flex h-fit w-fit px-4 py-1 border-2 border-gray-200
+       hover:cursor-pointer hover:bg-gray-100 ml-4 my-2" 
+              onClick={newWdmTest} disabled={isTakingTestId}>New Test</button>
+    </div>)}
+            
+  {step == 8 && (<div className="flex justify-center mb-16 mt-4 items-end w-full">
       <div className="flex flex-col
        justify-center items-center mt-8 w-1/3">
         <div className="flex w-fit my-4 px-4 py-1 ">Test Fill</div>
@@ -1251,7 +1792,7 @@ const submitWords = async () => {
               onClick={newTestFill}
           disabled={isTakingTestId}>New Test</button>
     </div>)}
-   {step == 11 && (<div className="flex justify-center mb-16 mt-4 items-end w-full">
+   {step == 9 && (<div className="flex justify-center mb-16 mt-4 items-end w-full">
       <div className="flex flex-col
        justify-center items-center mt-8 w-1/3">
         <div className="flex w-fit my-4 px-4 py-1 ">Test True/False</div>
@@ -1284,7 +1825,7 @@ const submitWords = async () => {
               onClick={newTestTF}
           disabled={isTakingTestId}>New Test</button>
     </div>)}
-    {step == 12 && (<div className="flex justify-center mb-16 mt-4 items-end w-full">
+    {step == 10 && (<div className="flex justify-center mb-16 mt-4 items-end w-full">
       <div className="flex flex-col
        justify-center items-center mt-8 w-1/3">
         <div className="flex w-fit my-4 px-4 py-1 ">Test Reply</div>
@@ -1338,7 +1879,7 @@ const submitWords = async () => {
        hover:cursor-pointer hover:bg-gray-100 ml-4 my-2" 
               onClick={newTestReply} disabled={isTakingTestId}>New Test</button>
     </div>)}
-   {step == 13 && (<div className="flex justify-center mb-16 mt-4 items-end w-full">
+   {step == 11 && (<div className="flex justify-center mb-16 mt-4 items-end w-full">
       <div className="flex flex-col
        justify-center items-center mt-8 w-1/3">
         <div className="flex w-fit my-4 px-4 py-1 ">Test Assessment</div>
@@ -1374,7 +1915,7 @@ const submitWords = async () => {
         <div className="flex px-2 w-full"><textarea 
           className="flex w-[calc(100%-2rem)] bg-[#fff] mt-2 mr-2 px-2 py-1 border-2 border-gray-300 rounded-md"
         value={testObj.opt4} onChange={(e) => updateTestAssOpt4(testObj, e.target.value)}
-                placeholder="Option 4" rows="2" cols="50"  disabled={isSubmitting}></textarea>
+                placeholder="Option 4" rows="2" cols="50" disabled={isSubmitting}></textarea>
                 <div className="flex w-8">
                   <input type="radio" name={`testAss-${testObj.id}`} checked={testObj.answer == 4}
                onChange={() => setTestAssAnswer(testObj, 4)}/></div></div>
@@ -1393,53 +1934,75 @@ const submitWords = async () => {
     { step >= 2 && <button onClick={prev} variant="outline"
      className="flex absolute left-8 w-fit border-1 border-gray-300 rounded-md bg-gray-100
       hover:cursor-pointer hover:bg-gray-50 px-4 py-1">Previous</button>}
-    { step <= 12 && <button onClick={next}
+    { step <= 10 && <button onClick={next}
      className="flex absolute right-8 w-fit border-1 border-gray-300 rounded-md bg-gray-100
       hover:cursor-pointer hover:bg-gray-50 px-4 py-1">Next</button>}
     </div>
-    <div   className="flex w-full justify-center items-center mt-4"> 
-    { step <= 7 &&(<button type="submit" className="flex  w-fit px-4 py-1 border-1
+    <div className="flex w-full justify-center items-center mt-4"> 
+    { step <= 2 &&(<button type="submit" className="flex  w-fit px-4 py-1 border-1
       rounded-md bg-gray-100 hover:cursor-pointer hover:bg-gray-50 mb-36" 
               onClick={() => {submitLesson()}}
           disabled={isSubmitting}>
 {saveLessonStatus ? (<div className="flex text-pink-500 font-bold text-lg mr-1">*</div>): ""}
           {isSubmitting ? "sending..." : "Save Lesson"}</button>)}
-    {step == 8 && (<button type="submit" 
+    {step == 3 && (<button type="submit" 
       className="flex  w-fit px-4 py-1 border-1
        mb-36 mt-12 border-gray-300 rounded-md bg-gray-100 hover:cursor-pointer hover:bg-gray-50" 
               onClick={() => {submitWords()}}
           disabled={isSubmitting}>
           {saveWordsStatus ? (<div className="flex text-pink-500 font-bold text-lg mr-1">*</div>): ""}
             {isSubmitting ? "sending..." : "Save Words"}</button>)}
-  {step == 9 && (<button type="submit" 
+        {step == 4 && (<button type="submit" 
+      className="flex  w-fit px-4 py-1 border-1
+       mb-36 mt-12 border-gray-300 rounded-md bg-gray-100 hover:cursor-pointer hover:bg-gray-50" 
+              onClick={() => {submitTechWords()}}
+          disabled={isSubmitting}>
+          {saveTechWordsStatus ? (<div className="flex text-pink-500 font-bold text-lg mr-1">*</div>): ""}
+            {isSubmitting ? "sending..." : "Save Technical Words"}</button>)}
+  {step == 5 && (<button type="submit" 
       className="flex  w-fit px-4 py-1 border-1
        mb-36 mt-12 border-gray-300 rounded-md bg-gray-100 hover:cursor-pointer hover:bg-gray-50" 
               onClick={() => {submitTestWrites()}}
           disabled={isSubmitting}>
           {testWritesStatus ? (<div className="flex text-pink-500 font-bold text-lg mr-1">*</div>): ""}
           {isSubmitting ? "sending..." : "Save Tests"}</button>)}
-{step == 10 && (<button type="submit" 
+{step == 6 && (<button type="submit" 
+      className="flex  w-fit px-4 py-1 border-1
+       mb-36 mt-12 border-gray-300 rounded-md bg-gray-100 hover:cursor-pointer hover:bg-gray-50" 
+              onClick={() => {submitDDTest()}}
+          disabled={isSubmitting}>
+          {dDTestStatus ? (<div className="flex text-pink-500 font-bold text-lg mr-1">*</div>): ""}
+          {isSubmitting ? "sending..." : "Save Tests"}</button>)}
+{step == 7 && (<button type="submit" 
+      className="flex  w-fit px-4 py-1 border-1
+       mb-36 mt-12 border-gray-300 rounded-md bg-gray-100 hover:cursor-pointer hover:bg-gray-50" 
+              onClick={() => {submitWdmTest()}}
+          disabled={isSubmitting}>
+          {wdmTestStatus ? (<div className="flex text-pink-500 font-bold text-lg mr-1">*</div>): ""}
+          {isSubmitting ? "sending..." : "Save Tests"}</button>)}
+
+{step == 8 && (<button type="submit" 
       className="flex  w-fit px-4 py-1 border-1
        mb-36 mt-12 border-gray-300 rounded-md bg-gray-100 hover:cursor-pointer hover:bg-gray-50" 
               onClick={() => {submitTestFills()}}
           disabled={isSubmitting}>
           {testFillsStatus ? (<div className="flex text-pink-500 font-bold text-lg mr-1">*</div>): ""}
             {isSubmitting ? "sending..." : "Save Tests"}</button>)}
-{step == 11 && (<button type="submit" 
+{step == 9 && (<button type="submit" 
       className="flex  w-fit px-4 py-1 border-1
        mb-36 mt-12 border-gray-300 rounded-md bg-gray-100 hover:cursor-pointer hover:bg-gray-50" 
               onClick={() => {submitTestTFs()}}
           disabled={isSubmitting}>
           {testTFsStatus ? (<div className="flex text-pink-500 font-bold text-lg mr-1">*</div>): ""}
             {isSubmitting ? "sending..." : "Save Tests"}</button>)}
-{step == 12 && (<button type="submit" 
+{step == 10 && (<button type="submit" 
       className="flex  w-fit px-4 py-1 border-1
        mb-36 mt-12 border-gray-300 rounded-md bg-gray-100 hover:cursor-pointer hover:bg-gray-50" 
               onClick={() => {submitTestReplies()}}
           disabled={isSubmitting}>
           {testRepliesStatus ? (<div className="flex text-pink-500 font-bold text-lg mr-1">*</div>): ""}
             {isSubmitting ? "sending..." : "Save Tests"}</button>)}
-{step == 13 && (<button type="submit" 
+{step == 11 && (<button type="submit" 
       className="flex  w-fit px-4 py-1 border-1
        mb-36 mt-12 border-gray-300 rounded-md bg-gray-100 hover:cursor-pointer hover:bg-gray-50" 
               onClick={() => {submitTestAsses()}}

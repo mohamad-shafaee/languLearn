@@ -56,10 +56,22 @@ class UserController extends Controller
     }
 
     public function getUser(Request $request){
-        return response()->json(['user' => Auth::user()]);
 
+        $user = Auth::user();
+        $result = [
+            'id'         => $user->id,
+            'name'       => $user->name,
+            'email'      => $user->email,
+            'type'       => $user->type, 
+            'is_premium' => $user->isPremium(),
 
+        ];
+        return response()->json(['user' => $result]); 
     }
+
+    /*public function getUser(Request $request){
+        return response()->json(['user' => Auth::user()]); 
+    }*/
 
     public function getUserData($id){
         $user = Auth::user();

@@ -11,18 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_ttws', function (Blueprint $table) {
+        Schema::create('tech_words', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')      // FK column
-                  ->constrained('users')      // references id on users table
-                  ->onDelete('cascade'); 
             $table->foreignId('lesson_id')      // FK column
                   ->constrained('lessons')      // references id on lessons table
                   ->onDelete('cascade');
+            $table->unsignedTinyInteger('part')->nullable();
             $table->string('word');
-            $table->string('status')->default('selected');
-            $table->boolean('learned')->nullable();
-
+            $table->string('phonetic')->nullable();
+            $table->text('mean')->nullable();
             $table->timestamps();
         });
     }
@@ -32,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_ttws');
+        Schema::dropIfExists('tech_words');
     }
 };

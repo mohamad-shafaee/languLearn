@@ -14,6 +14,7 @@ import ChangePassLogedinPage from "./pages/changePasswordLogedin";
 import AdminPanel from "./pages/adminPanel";
 import CreateField from "./pages/createField";
 import EdLesson from "./pages/edLesson";
+import LessonPage from "./pages/lesson-page";
 import Working from "./pages/user-working";
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -82,6 +83,7 @@ const App: React.FC = () => {
             <Route path="/change-password-logedin-form" element={<Navigate to="/login" replace />} />
             <Route path="/create-lesson" element={<Navigate to="/login" replace />} />
             <Route path="/working" element={<Navigate to="/login" replace />} />
+            <Route path="/lesson-page/:fieldId/:lessonId" element={<Navigate to="/login" replace />} />
           </>
         )}
 
@@ -112,6 +114,12 @@ const App: React.FC = () => {
                 </AppLayout>
               }
             />
+            <Route
+             path="/lesson-page/:fieldId/:lessonId"
+             element={<AppLayout>
+                  <LessonPage />
+                </AppLayout>}
+             />
 
             {/* Redirect guest-only routes to dashboard */}
             <Route path="/login" element={<Navigate to={`/profile/${user.id}`} replace />} />

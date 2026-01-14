@@ -69,6 +69,16 @@ class Lesson extends Model
         return $this->hasMany(TestAss::class);
     }
 
+    public function defDetectTests()
+    {
+        return $this->hasMany(DefDetectTest::class);
+    }
+
+    public function wdmTests()
+    {
+        return $this->hasMany(WdmTest::class);
+    }
+
     public function users()
     {
         return $this->belongsToMany(User::class, 'user_ls')
@@ -81,5 +91,10 @@ class Lesson extends Model
     {
         return $this->hasMany(Word::class);
     }
+
+    public function uiWords()
+{
+    return $this->hasMany(UIWord::class);
+}
 
 }

@@ -21,4 +21,9 @@ class TestWrite extends Model
     {
     return $this->belongsTo(User::class, 'author_id');
     }*/
+
+    public function answers()
+    {
+        return $this->hasMany(AnswerTw::class);
+    }
 }

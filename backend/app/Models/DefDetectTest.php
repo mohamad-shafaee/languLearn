@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class TestFill extends Model
+class DefDetectTest extends Model
 {
     /**
      * The attributes that are mass assignable.
@@ -13,10 +13,12 @@ class TestFill extends Model
      */
     protected $fillable = [
         'lesson_id',
-        //'author_id',
-        'body',
-        'fill1',
-        'fill2',
+        'word',
+        'part',
+        'text1',
+        'text2',
+        'text3',
+        'answer',
     ];
 
     public function lesson()
@@ -26,11 +28,6 @@ class TestFill extends Model
 
     public function answers()
     {
-        return $this->hasMany(AnswerTf::class);
+        return $this->hasMany(AnswerDdt::class);
     }
-
-    /*public function author()
-    {
-    return $this->belongsTo(User::class, 'author_id');
-    }*/
 }

@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('words', function (Blueprint $table) {
+        Schema::create('wdm_tests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('lesson_id')      // FK column
                   ->constrained('lessons')      // references id on lessons table
-                  ->onDelete('cascade');
-            $table->string('word');
-            $table->string('phonetic')->nullable(); 
+                  ->onDelete('cascade'); 
+            $table->unsignedTinyInteger('part')->nullable();
+            $table->text('body')->nullable();
+            $table->text('answer')->nullable();
             $table->timestamps();
         });
     }
@@ -27,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('words');
+        Schema::dropIfExists('wdm_tests');
     }
 };

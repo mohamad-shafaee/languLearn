@@ -25,11 +25,3 @@ public function lesson() {
 }
 }
 
-/*  How to find mean of 'example' in French?
-$meaning = WordMean::whereHas('word', fn ($q) =>
-        $q->where('word', 'example')
-    )
-    ->whereHas('language', fn ($q) =>
-        $q->where('code', 'fr')
-    )
-    ->value('mean');*/

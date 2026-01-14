@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class AnswerTw extends Model
+class WdmTest extends Model
 {
     /**
      * The attributes that are mass assignable.
@@ -12,14 +12,14 @@ class AnswerTw extends Model
      * @var list<string>
      */
     protected $fillable = [
-        'user_id',
         'lesson_id',
-        'test_write_id',
+        'part',
+        'body',
         'answer',
     ];
 
-    public function test()
+    public function lesson()
     {
-        return $this->belongsTo(TestWrite::class);
+    return $this->belongsTo(Lesson::class);
     }
 }

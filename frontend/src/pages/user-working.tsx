@@ -19,11 +19,10 @@ type Lesson = {
   order: number | null;
   title: string | null;
   img_path: string | null;
-  abstract: string | null;
-  //done: boolean | null; //All tests plus test assessment are done
+  abstract: string | null; 
   score: number | null;
   //open: boolean | null; // true: you could read it since you done its previous lessons
-  limit: boolean | null; // true: It is free or you earned it by pay 
+  //done: boolean | null; //All tests plus test assessment are done 
 };
 
 const UserWorking: React.FC = () => {
@@ -236,6 +235,26 @@ const UserWorking: React.FC = () => {
       alert("Failed to save fields for you.");
     } finally{setIsSubmitting(false);}
   };
+
+  const openLesson = (lesson) => {
+    const access = true;
+    if(!access){
+      //navigate to buy premium page
+      //navigate(`/premium-panels`);
+
+    }
+
+    const last_lesson = usrLessons.find(item => item.id == currentUsrField.last_lesson_id);
+    const is_open = !currentUsrField.has_order ? true : 
+    (currentUsrField.last_lesson_stat == "passed" ? (lesson.order <= (last_lesson.order + 1)) : 
+      (lesson.order <= last_lesson.order));
+
+    if(!is_open){
+      alert("You should pass prerequired lessons first!");
+      return;
+    }
+    navigate(`/lesson-page/${currentUsrField.id}/${lesson.id}`);
+  };
    
   return (<div className="flex flex-col w-full items-center justify-center">
     {(addRemoveFieldOpen || selectFieldNeed) && 
@@ -271,7 +290,8 @@ const UserWorking: React.FC = () => {
       </div>
       <div className="flex flex-col border-2 border-gray-300 rounded-md h-screen py-8 px-4 w-[85%]">
         {usrLessons.map((item, index)=>(<div key={item.id} 
-          className="flex w-full">{item.title + " " + item.order + " "+ (item.score ?? "*")}</div>))}
+          className="flex w-full px-4 py-1 border-1 border-red-300
+           rounded-md hover:cursor-pointer" onClick={()=>openLesson(item)}>{item.title}</div>))}
       </div>
     </div>)} </div>
   );

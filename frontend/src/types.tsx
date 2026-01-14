@@ -7,7 +7,7 @@ export type Mean = {
 };
 
 export type WordObj = { 
-  id: string;  // UUID or incremental number
+  id: string;
   word: string;
   phonetic: string | null;
   means: Mean[];
@@ -49,6 +49,15 @@ export type TestFill = {
   fill2: string;
 }
 
+export type UsrTestFill = {
+  id: number; 
+  body: string;
+  fill1: string;
+  fill2: string;
+  usr_answer1: string;
+  usr_answer2: string;
+}
+
 export type TestTF = {
   id: number; 
   body: string;
@@ -76,6 +85,48 @@ export type TestAss = {
   opt4: string;
   answer: number;
 }
+
+export type UsrTestWrite = {
+  id: number;
+  body: string;
+  usr_answer: string;
+} 
+
+export type WordObjS = { 
+  word_id: number;
+  status: number;
+  learned: boolean;
+};
+
+export type DefDetectTest = {
+  id: number;
+  word: string;
+  part: number;
+  text1: string;
+  text2: string;
+  text3: string;
+  answer: number;
+};
+
+export type WdmTest = {
+  id: number;
+  part: number;
+  body: string;
+  answer: string;
+  usr_answer: string;
+  toggle_usr_answer: boolean;
+};
+
+/*export type UsrDefDetectTest = {
+  id: number;
+  word: string;
+  text1: string;
+  text2: string;
+  text3: string;
+  answer: number;
+};*/
+
+
 
 
 

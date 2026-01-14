@@ -1,7 +1,4 @@
-import { useState, useRef, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
-//import type { LessonItem } from "../types";
-
+ 
 
  
 export default function LessonCard(props) {

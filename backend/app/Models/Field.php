@@ -42,4 +42,11 @@ class Field extends Model
     {
     return $this->belongsTo(User::class, 'author_id');
     }
+
+    public function uiWords()
+     {
+       return $this->hasMany(UIWord::class);
+    }
+
+
 }

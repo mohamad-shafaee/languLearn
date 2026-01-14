@@ -11,21 +11,23 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('answer_tws', function (Blueprint $table) {
+        Schema::create('user_ttws', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')      // FK column
                   ->constrained('users')      // references id on users table
                   ->onDelete('cascade'); 
             $table->foreignId('lesson_id')      // FK column
                   ->constrained('lessons')      // references id on lessons table
-                  ->onDelete('cascade'); 
-            $table->foreignId('test_write_id')      // FK column
-                  ->constrained('test_writes')      // references id on test_writes table
-                  ->onDelete('cascade');  
-            $table->string('answer')->nullable();
+                  ->onDelete('cascade');
+            $table->foreignId('word_id')      // FK column
+                  ->constrained('words')      // references id on users table
+                  ->onDelete('cascade');
+            $table->unsignedTinyInteger('part');
+            //$table->unsignedInteger('word_id');
+            $table->integer('status')->default('1');
+            $table->boolean('learned')->default(false);
 
             $table->timestamps();
-            $table->unique(['user_id', 'test_write_id']);
         });
     }
 
@@ -34,6 +36,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('answer_tws');
+        Schema::dropIfExists('user_ttws');
     }
 };
