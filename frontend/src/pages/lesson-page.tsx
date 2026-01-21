@@ -3,7 +3,7 @@ import { useAuth } from "../auth";
 import WordInfo from "../components/wordInfo";
 import { Pencil, Edit, Save, ChevronRight } from "lucide-react";
 import type { WordObj, Language, UsrDefDetectTest,
-WdmTest, UsrTestWrite, TestTF, TestReply, UsrTestFill, TestAss, WordObjS } from "../types";
+WdmTest, UsrTestWrite, UsrTestTF, UsrTestReply, UsrTestFill, UsrTestAss, WordObjS } from "../types";
 import { v4 as uuidv4 } from 'uuid';
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +13,11 @@ import WordCloud from "../components/word-cloud";
 import MatchWordMean from "../components/match-word-mean";
 import UsrDDTestComp from "../components/usr-dd-test";
 import TestFill from "../components/user-test-fill";
+import TestTF from "../components/user-test-tf";
+import TestReply from "../components/user-test-reply";
+import TestAss from "../components/user-test-ass";
+import ProgressBar from "../components/progress-bar";
+import TestEvaluation from "../components/test-evaluation";
 
 type Field = {
   id: number;
@@ -54,6 +59,12 @@ type MatchesDDT = {
   match: number;
 }
 
+type Eval = {
+  all: number;
+  wrong: number;
+  correct: number;
+} 
+
  
 const LessonPage: React.FC = () => {
   const { fieldId, lessonId } = useParams();
@@ -63,10 +74,13 @@ const LessonPage: React.FC = () => {
   const [field, setField] = useState<Field>({id: fieldId, name: ""});
   
   const [lesson, setLesson] = useState<Lesson>({id: lessonId});
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<number>(1);
+  const [step1Sec, setStep1Sec] = useState<number>(1);
+  const [step2Sec, setStep2Sec] = useState<number>(1);
+  const [step3Sec, setStep3Sec] = useState<number>(1);
   //const [languages, setLanguages] = useState<Language[]>([]);
  
-  const next = () => setStep((s) => Math.min(s + 1, 13));
+  const next = () => setStep((s) => Math.min(s + 1, 5));
   const prev = () => setStep((s) => Math.max(s - 1, 1));
 
   const [words, setWords] = useState<WordObj[]>([]);
@@ -103,16 +117,28 @@ const LessonPage: React.FC = () => {
 
   const [usrPrevStaredWordsPage2, setUsrPrevStaredWordsPage2] = useState<WordObjS[]>([]);
   const [usrStaredWordsPage2, setUsrStaredWordsPage2] = useState<WordObjS[]>([]);
+  const [randomWordsPage3, setRandomWordsPage3] = useState<WordObjS[]>([]);
 
   const [matchesOfDDTests, setMatchesOfDDTests] = useState<MatchesDDT[]>([]);
    
   const [usrTestFills, setUsrTestFills] = useState<UsrTestFill[]>([]); 
+  const [usrTestTFs, setUsrTestTFs] = useState<UsrTestTF[]>([]); 
+  const [usrTestReplies, setUsrTestReplies] = useState<UsrTestReply[]>([]); 
+  const [usrTestAsses, setUsrTestAsses] = useState<UsrTestAss[]>([]);
+  
+  const [usrTestAssesScore, setUsrTestAssesScore] = useState<Eval>({all: 0, wrong: 0, correct: 0});
+  const [usrTestRepliesScore, setUsrTestRepliesScore] = useState<Eval>({all: 0, wrong: 0, correct: 0});
+  const [usrTestTFsScore, setUsrTestTFsScore] = useState<Eval>({all: 0, wrong: 0, correct: 0});
+  const [usrTestFillsScore, setUsrTestFillsScore] = useState<Eval>({all: 0, wrong: 0, correct: 0});
 
-  const [testTFs, setTestTFs] = useState<TestTF[]>([]); 
-  const [testReplies, setTestReplies] = useState<TestReply[]>([]); 
-  const [testAsses, setTestAsses] = useState<TestAss[]>([]);
-
-  //useEffect(()=>{console.log("words of this lesson: ", words);}, [words]);
+  const [testFillAnswerToggle, setTestFillAnswerToggle] = useState<boolean>(false);
+  const [testTFAnswerToggle, setTestTFAnswerToggle] = useState<boolean>(false);
+  const [testReplyAnswerToggle, setTestReplyAnswerToggle] = useState<boolean>(false);
+  const [testAssAnswerToggle, setTestAssAnswerToggle] = useState<boolean>(false);
+  const [submittingTestFill, setSubmittingTestFill] = useState<boolean>(false);
+  const [submittingTestTF, setSubmittingTestTF] = useState<boolean>(false);
+  const [submittingTestReply, setSubmittingTestReply] = useState<boolean>(false);
+  const [submittingTestAss, setSubmittingTestAss] = useState<boolean>(false);
 
   useEffect(()=>{
     setUsrDDTestsP1(usrDDTests.filter(te => (te.part == 1 && te.word != '' && te.text1 != '')));
@@ -136,13 +162,9 @@ const LessonPage: React.FC = () => {
     setTechWordsP2(techWords.filter(tw => (tw.part == 2 && tw.word != '' && tw.mean != '')));
     setTechWordsP3(techWords.filter(tw => (tw.part == 3 && tw.word != '' && tw.mean != '')));
     setTechWordsP4(techWords.filter(tw => (tw.part == 4 && tw.word != '' && tw.mean != '')));
-    setTechWordsP5(techWords.filter(tw => (tw.part == 5 && tw.word != '' && tw.mean != '')));
-    console.log("tech words: ", techWords);
+    setTechWordsP5(techWords.filter(tw => (tw.part == 5 && tw.word != '' && tw.mean != ''))); 
   }, [techWords]);
 
-  useEffect(()=>{
-    console.log("Tests fills: ", usrTestFills);
-  }, [usrTestFills]);
 
   
   useEffect(() => {
@@ -242,8 +264,7 @@ const LessonPage: React.FC = () => {
               body: JSON.stringify({ lessonId: lessonId, })
       });
       const data = await res.json();
-      if (res.ok) {
-        //console.log("The words::: ", data.words);
+      if (res.ok) { 
         setUsrTestWrites(data.tests);
         
       } else {
@@ -351,9 +372,7 @@ const LessonPage: React.FC = () => {
 
   getUsrPrevStaredWordsI(1);
   getUsrPrevStaredWordsI(2);
-
-
-
+ 
   const getUsrTestFills = async ()=>{
     try {
       //setIsSubmitting(true); // problematic 
@@ -382,9 +401,10 @@ const LessonPage: React.FC = () => {
 
   getUsrTestFills();
 
-  /*const getTestTFs = async ()=>{
+  const getUsrTestTFs = async ()=>{
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-lesson-test-TFs`, {
+      //setIsSubmitting(true); // problematic 
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-user-test-tfs`, {
         method: "POST",
          headers: {
               "Content-Type": "application/json",
@@ -395,16 +415,24 @@ const LessonPage: React.FC = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        setTestTFs(data.tests);
+        setUsrTestTFs(data.tests);
+        
       } else {
-        alert("Tests True/False of the lesson are not taken!"); 
+        alert("Tests True/False of the lesson are not taken!");
+        
       }
-    } catch (err) {} finally{}
+    } catch (err) {
+      
+    } finally{//setIsSubmitting(false);
+    }
   };
 
-   const getTestReplies = async ()=>{
+  getUsrTestTFs();
+
+  const getUsrTestReplies = async ()=>{
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-lesson-test-replies`, {
+      //setIsSubmitting(true); // problematic 
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-user-test-replies`, {
         method: "POST",
          headers: {
               "Content-Type": "application/json",
@@ -415,16 +443,24 @@ const LessonPage: React.FC = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        setTestReplies(data.tests);
+        setUsrTestReplies(data.tests);
+        
       } else {
-        alert("Tests Reply of the lesson are not taken!"); 
+        alert("Tests Replies of the lesson are not taken!");
+        
       }
-    } catch (err) {} finally{}
+    } catch (err) {
+      
+    } finally{//setIsSubmitting(false);
+    }
   };
 
-  const getTestAsses = async ()=>{
+  getUsrTestReplies();
+
+   const getUsrTestAsses = async ()=>{
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-lesson-test-asses`, {
+      //setIsSubmitting(true); // problematic 
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-user-test-asses`, {
         method: "POST",
          headers: {
               "Content-Type": "application/json",
@@ -435,52 +471,193 @@ const LessonPage: React.FC = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        setTestAsses(data.tests);
+        setUsrTestAsses(data.tests);
+        
       } else {
-        alert("Tests Assessment of the lesson are not taken!"); 
+        alert("Tests Assessment of the lesson are not taken!");
+        
       }
-    } catch (err) {} finally{}
+    } catch (err) {
+      
+    } finally{//setIsSubmitting(false);
+    }
   };
 
-  const requestAndSetLessonId = async () => {
-      try {
-       //setIsSubmitting(true);
-       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/take-lesson-id`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "Authorization": `Bearer ${token}`, //send token here
-        },
-        body: JSON.stringify({authorId: user.id,})
-      });
-      if (!response.ok) { return; }
-      const result = await response.json();
-      if(result.success){
-          //setLesson(prev => ({...(prev || {}), id: result.id, }));
-          //return result.id;
-          navigate(`/admin/lesson/${result.id}`, { replace: true });
-      } 
-    } catch {} finally {//setIsSubmitting(false);
-    };
-  };*/
+  getUsrTestAsses();
+    
 
-
-  /*if(lessonId == 'create'){
-    requestAndSetLessonId(); 
-  }
-    else if (Number.isInteger(Number(lessonId))){
-        getLesson();
-        getFields();
-        getSelectedFields();
-        getWords();
-        getTestWrites();
-        getTestFills();
-        getTestTFs();
-        getTestReplies();
-        getTestAsses();
-    }*/
   }, [lessonId]);
+
+
+useEffect(()=>{
+
+  const getUsrTestFillsScore = async () => {
+        try {
+      //setIsSubmitting(true); // problematic 
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-user-test-fills-score`, {
+        method: "POST",
+         headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Authorization": `Bearer ${token}`, //send token here
+            },
+              body: JSON.stringify({ lessonId: lessonId, })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        
+        setUsrTestFillsScore({all: data.all, wrong: data.wrong, correct: data.correct});
+        
+      } else {
+        //alert("Tests Assessment of the lesson are not taken!");
+        
+      }
+    } catch (err) {
+      
+    } finally{//setIsSubmitting(false);
+    }
+
+  };
+ 
+      const getUsrTestTFsScore = async () => {
+        try {
+      //setIsSubmitting(true); // problematic 
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-user-test-tfs-score`, {
+        method: "POST",
+         headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Authorization": `Bearer ${token}`, //send token here
+            },
+              body: JSON.stringify({ lessonId: lessonId, })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        
+        setUsrTestTFsScore({all: data.all, wrong: data.wrong, correct: data.correct});
+        
+      } else {
+        //alert("Tests Assessment of the lesson are not taken!");
+        
+      }
+    } catch (err) {
+      
+    } finally{//setIsSubmitting(false);
+    }
+
+  };
+    const getUsrTestRepliesScore = async () => {
+        try {
+      //setIsSubmitting(true); // problematic 
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-user-test-replies-score`, {
+        method: "POST",
+         headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Authorization": `Bearer ${token}`, //send token here
+            },
+              body: JSON.stringify({ lessonId: lessonId, })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        
+        setUsrTestRepliesScore({all: data.all, wrong: data.wrong, correct: data.correct});
+        
+      } else {
+        //alert("Tests Assessment of the lesson are not taken!");
+        
+      }
+    } catch (err) {
+      
+    } finally{//setIsSubmitting(false);
+    }
+
+  };
+  const getUsrTestAssesScore = async () => {
+        try {
+      //setIsSubmitting(true); // problematic 
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/get-user-test-asses-score`, {
+        method: "POST",
+         headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Authorization": `Bearer ${token}`, //send token here
+            },
+              body: JSON.stringify({ lessonId: lessonId, })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        
+        setUsrTestAssesScore({all: data.all, wrong: data.wrong, correct: data.correct});
+        
+      } else {
+        //alert("Tests Assessment of the lesson are not taken!");
+        
+      }
+    } catch (err) {
+      
+    } finally{//setIsSubmitting(false);
+    }
+
+  };
+  
+  if(step == 3){
+    getUsrTestFillsScore();
+    getUsrTestTFsScore();
+  }
+  
+  if(step == 4){
+    getUsrTestRepliesScore();
+  }
+  if(step == 5){
+    getUsrTestAssesScore();
+  }
+}, [step, testFillAnswerToggle, testTFAnswerToggle, testReplyAnswerToggle,testAssAnswerToggle]);
+
+useEffect(()=>{
+
+  const shuffleArray = array => [...array].sort(() => Math.random() - 0.5);
+
+  const makeRandomWordsPage3 = () => {
+    if(randomWordsPage3.length >= 2){
+      return;
+    }
+    const rand_words = shuffleArray(words).map((w, i)=> ({word_id: w.id, status: 1, learned: false}));
+    setRandomWordsPage3(rand_words);
+  };
+
+  if(step == 3){
+    makeRandomWordsPage3();
+  }
+
+
+}, [step, words]);
+
+useEffect(()=>{
+
+  const updateFieldUsrStatus = async () => {
+        try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/update-field-user-status`, {
+        method: "POST",
+         headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Authorization": `Bearer ${token}`, //send token here
+            },
+              body: JSON.stringify({ lessonId: lessonId, fieldId: fieldId })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if(data.passed){
+          alert("Congratulations! You passed the lesson and could take the next lesson.");
+        }
+      } else { }
+    } catch (err) { } finally{ }
+  };
+
+  updateFieldUsrStatus();
+
+}, [testFillAnswerToggle, testTFAnswerToggle, testReplyAnswerToggle,testAssAnswerToggle]);
 
   useEffect(() => {
 
@@ -502,8 +679,7 @@ const LessonPage: React.FC = () => {
       const data = await res.json();
       if (res.ok) { 
         if(data.words.length > 0){
-          setInteractiveWords(data.words);
-          console.log("interactive get words: ", data.words);
+          setInteractiveWords(data.words); 
           const selected = Math.max(...data.words.map(w => (w.user_selected ? 1 : 0)  ));
           if(selected == 0){
             setUsrCouldSelectUIW(true);
@@ -626,8 +802,7 @@ const LessonPage: React.FC = () => {
     }
   };
 
-  useEffect(()=>{
-    //console.log("hhh words: ", usrStaredWords);
+  useEffect(()=>{ 
     setAreStaredWordsChanged(checkForStaredWordChange(usrPrevStaredWords, usrStaredWords));
   }, [usrStaredWords, usrPrevStaredWords]);
 
@@ -652,15 +827,23 @@ const LessonPage: React.FC = () => {
   };
 
   const updateUsrAnswerTestFill = (num, test, val) => {
-    setUsrTestFills(usrTestFills.map(te => te.id == test.id ? (num == 1 ? {...te, usr_answer1: val} :
-     {...te, usr_answer2: val}) : te));
+    if(num == 1){
+      setUsrTestFills(usrTestFills.map(te => te.id == test.id ? {...te, usr_answer1: val} :
+      te));
+    }
+
+    if(num == 2){
+      setUsrTestFills(usrTestFills.map(te => te.id == test.id ? {...te, usr_answer2: val} :
+      te));
+    }
+    
   };
 
   const submitTestFillsAnswer = async () => {
 
     const payload = {lessonId: lessonId, tests: usrTestFills}; 
     try {
-      //setIsSubmitting(true); // problematic 
+      setSubmittingTestFill(true); 
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/save-user-testfills-answer`, {
         method: "POST",
          headers: {
@@ -672,7 +855,9 @@ const LessonPage: React.FC = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        alert("Test answer saved!");
+        setTestFillAnswerToggle(!testFillAnswerToggle);
+
+        //alert("Test answer saved!");
 
       } else {
         alert("Test answer is not saved!");
@@ -680,17 +865,156 @@ const LessonPage: React.FC = () => {
       }
     } catch (err) {
       
-    } finally{//setIsSubmitting(false);
-    }
+    } finally{setSubmittingTestFill(false);}
 
   };
+
+    const updateUsrAnswerTestTF = (test, val) => {
+      setUsrTestTFs(usrTestTFs.map(te => te.id == test.id ? {...te, usr_answer: val} :
+      te));
+   };
+
+  const submitTestTFsAnswer = async () => {
+
+    const payload = {lessonId: lessonId, tests: usrTestTFs}; 
+    try {
+      setSubmittingTestTF(true);
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/save-user-testtfs-answer`, {
+        method: "POST",
+         headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Authorization": `Bearer ${token}`, //send token here
+            },
+              body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTestTFAnswerToggle(!testTFAnswerToggle);
+
+      } else {
+        alert("Test answer is not saved!");
+        
+      }
+    } catch (err) {
+      
+    } finally{ setSubmittingTestTF(false); }
+
+  };
+
+  const updateUsrAnswerTestReply = (test, val) => {
+      setUsrTestReplies(prev => prev.map(tr => tr.id == test.id ? {...tr, usr_answer: val} : tr));
+   };
+
+  const submitTestRepliesAnswer = async () => {
+
+    const payload = {lessonId: lessonId, tests: usrTestReplies}; 
+    try {
+      setSubmittingTestReply(true); 
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/save-user-testreplies-answer`, {
+        method: "POST",
+         headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Authorization": `Bearer ${token}`, //send token here
+            },
+              body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTestReplyAnswerToggle(!testReplyAnswerToggle);
+
+      } else {
+        alert("Test answer is not saved!");
+        
+      }
+    } catch (err) {
+      
+    } finally{ setSubmittingTestReply(false); }
+
+  };
+
+  const updateUsrAnswerTestAss = (test, val) => {
+      setUsrTestAsses(prev => prev.map(ta => ta.id == test.id ? {...ta, usr_answer: val} : ta));
+   };
+
+   const submitTestAssesAnswer = async () => {
+
+    const payload = {lessonId: lessonId, tests: usrTestAsses}; 
+    try {
+      setSubmittingTestAss(true); 
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/save-user-testasses-answer`, {
+        method: "POST",
+         headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Authorization": `Bearer ${token}`, //send token here
+            },
+              body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTestAssAnswerToggle(!testAssAnswerToggle);
+
+      } else {
+        alert("Test answer is not saved!");
+        
+      }
+    } catch (err) {
+      
+    } finally{setSubmittingTestAss(false); }
+
+  };
+
+  const navStep1 = (num)=>{
+    if(step1Sec == num){
+      return;
+    }
+    setStep1Sec(num);
+  };
+
+  const navStep2 = (num)=>{
+    if(step2Sec == num){
+      return;
+    }
+    setStep2Sec(num);
+  };
+
+  const navStep3 = (num)=>{
+    if(step3Sec == num){
+      return;
+    }
+    setStep3Sec(num);
+  };
+
+   
+
+
  
 	if (!user) {
     return <div>You do not have access to this page!</div>;
   }
 
-   return <>{step == 1 && (<div className="flex items-center flex-col w-full"> 
-    <div className="flex border-1 border-red-300 w-fit mt-4 px-4 py-1 ">
+   return <>
+   {step == 1 && (<div className="flex w-full">
+   <div className="flex flex-col w-48 border-2 border-blue-500 rounded-md">
+    <div className="flex flex-col h-fit py-4 px-1">
+      <div className={`flex px-4 py-1 mt-2 bg-blue-50 rounded-md
+        ${step1Sec == 1 ? "text-gray-400 hover:none" :
+         "hover:text-blue-700 hover:cursor-pointer hover:shadow-md"
+     }`} onClick={()=>navStep1(1)}>Video</div>
+      <div className={`flex px-4 py-1 mt-2 bg-blue-50 rounded-md 
+      ${step1Sec == 2 ? "text-gray-400 hover:none" :
+         "hover:text-blue-700 hover:cursor-pointer hover:shadow-md"
+     }`} onClick={()=>navStep1(2)}>Words Cloud</div>
+      <div className={`flex px-4 py-1 mt-2 bg-blue-50 rounded-md
+       ${step1Sec == 3 ? "text-gray-400 hover:none" :
+         "hover:text-blue-700 hover:cursor-pointer hover:shadow-md"
+     }`} onClick={()=>navStep1(3)}>Technical Terms</div>
+    </div>
+  </div>
+   <div className="flex flex-col items-center w-full border-2 border-green-500 rounded-md">
+    {step1Sec == 1 && (<><div className="flex border-1 border-red-300 w-fit mt-4 px-4 py-1 ">
       <div className="flex p-2 font-semibold text-xl">{lesson?.title}</div>
       <div className="flex p-2 w-36 h-36 relative border-2 border-blue-300 rounded-md">
         <img src={lesson?.img_path || null} alt="Lesson Image"
@@ -708,12 +1032,12 @@ const LessonPage: React.FC = () => {
       </div> 
      <div className="flex p-2 mt-8 w-2/3 h-fit relative border-2 border-blue-300 rounded-md">
         {lesson?.video1_text}
-      </div>
-      {(interactiveWords.length > 0) && (<div className="flex flex-col p-2 mt-8 w-2/3 h-fit relative
+      </div></>)}
+{step1Sec == 2 && (<>{(interactiveWords.length > 0) && (<div className="flex 
+  flex-col p-2 mt-2 w-2/3 relative
        border-2 border-blue-300 rounded-md"> 
         <WordCloud words={interactiveWords}/>
-      </div> )}
-
+      </div> )} 
       {usrCouldSelectUIW && (<div className="flex flex-col p-2 mt-8 w-2/3 
         h-fit relative border-2 border-blue-300 rounded-md">
         <div className="flex">Which words are new or interesting to you? plese select three words.</div>
@@ -721,8 +1045,9 @@ const LessonPage: React.FC = () => {
          onSelect={(wordsArray)=>{setUsrInteractiveWords(wordsArray)}}
          saveInteractiveWords={()=>submitInteractiveWords()}/></div>
       </div> )} 
-       
-      <div className="flex flex-col p-2 mt-8 w-2/3 min-h-48 relative
+</>)}
+{step1Sec == 3 && (<>
+    <div className="flex flex-col p-2 mt-8 w-2/3 min-h-48 relative
        border-2 border-blue-300 rounded-md">
         <ParseText text={lesson?.tech_term_body} words={words} staredWords={usrStaredWords} 
           addRemoveStaredWords={(w)=> {
@@ -744,8 +1069,7 @@ const LessonPage: React.FC = () => {
          hover:cursor-pointer hover:shadow-md" onClick={() => submitStaredWordsI(1)}>
          Save Selected Words</div>)}
         </div>)}
-      </div>
-
+      </div>      
       <div className="flex flex-col p-2 mt-8 w-2/3 min-h-48 relative items-center justify-center
        border-2 border-blue-300 rounded-md">
         {usrTestWrites.map((test, ind)=> (<div key={test.id} className="flex flex-col w-full">
@@ -759,15 +1083,49 @@ const LessonPage: React.FC = () => {
            onClick={()=>saveTWrAnswer(test)}>Save</div>
 
         </div>))}
-      </div> 
-      <div className="flex w-2/3 my-4 px-4 py-2 border-1 border-blue-500 rounded-md">
+      </div>
+            <div className="flex w-2/3 my-4 px-4 py-2 border-1 border-blue-500 rounded-md">
           <MatchWordMean words={words} stared={usrStaredWords} />
-        </div> 
-    </div>)}
-    { step == 2 && (<><div className="flex items-center flex-col w-full">
-      <div className="flex flex-col p-2 mt-8 w-2/3">
+        </div>
+</>)}</div></div>)}
+    { step == 2 && (<><div className="flex w-full"><div className="flex flex-col w-48
+     border-2 border-blue-500 rounded-md">
+    <div className="flex flex-col h-fit py-4 px-1">
+      <div className={`flex px-4 py-1 mt-2 bg-blue-50 rounded-md
+        ${step2Sec == 1 ? "text-gray-400 hover:none" :
+         "hover:text-blue-700 hover:cursor-pointer hover:shadow-md"
+     }`} onClick={()=>navStep2(1)}>Paragraph 1</div>
+      <div className={`flex px-4 py-1 mt-2 bg-blue-50 rounded-md 
+      ${step2Sec == 2 ? "text-gray-400 hover:none" :
+         "hover:text-blue-700 hover:cursor-pointer hover:shadow-md"
+     }`} onClick={()=>navStep2(2)}>Paragraph 2</div>
+      <div className={`flex px-4 py-1 mt-2 bg-blue-50 rounded-md
+       ${step2Sec == 3 ? "text-gray-400 hover:none" :
+         "hover:text-blue-700 hover:cursor-pointer hover:shadow-md"
+     }`} onClick={()=>navStep2(3)}>Paragraph 3</div>
+           <div className={`flex px-4 py-1 mt-2 bg-blue-50 rounded-md
+       ${step2Sec == 4 ? "text-gray-400 hover:none" :
+         "hover:text-blue-700 hover:cursor-pointer hover:shadow-md"
+     }`} onClick={()=>navStep2(4)}>Paragraph 4</div>
+           <div className={`flex px-4 py-1 mt-2 bg-blue-50 rounded-md
+       ${step2Sec == 5 ? "text-gray-400 hover:none" :
+         "hover:text-blue-700 hover:cursor-pointer hover:shadow-md"
+     }`} onClick={()=>navStep2(5)}>Paragraph 5</div>
+     <div className={`flex px-4 py-1 mt-2 bg-blue-50 rounded-md
+       ${step2Sec == 6 ? "text-gray-400 hover:none" :
+         "hover:text-blue-700 hover:cursor-pointer hover:shadow-md"
+     }`} onClick={()=>navStep2(6)}>Match Words</div>
+    </div>
+  </div>
+<div className="flex flex-col items-center p-2 mt-8 w-full">
+  {step2Sec < 6 && (<div className="flex flex-col p-2 mt-8 w-2/3">
         Please read the following text and do the next exercises.
-      </div> 
+      </div>)}
+  {step2Sec == 6 && (<div className="flex flex-col p-2 mt-8 w-2/3">
+        Please drag & drop the meaning (at right) to suitable word (at left).
+      </div>)}
+
+      {step2Sec == 1 && (<div className="flex items-center flex-col w-full">
       <div className="flex flex-col p-2 mt-4 w-2/3 min-h-48 relative border-2 border-blue-300 rounded-md">
         <ParseText text={lesson?.text_p21} words={words} staredWords={usrStaredWordsPage2} 
           addRemoveStaredWords={(w)=> {
@@ -826,11 +1184,10 @@ const LessonPage: React.FC = () => {
          <div className="flex w-1/5 px-2 py-1 my-1">{tecWord.word}</div>
        <div className="flex flex-col w-4/5 px-2 py-1 my-1">
         {tecWord.mean}</div></div>))}</div>)}</div></div>
-
+)}
+      {step2Sec == 2 && (
        <div className="flex items-center flex-col w-full">
-      <div className="flex flex-col p-2 mt-8 w-2/3">
-        Please read the following text and do the next exercises.
-      </div><div className="flex flex-col p-2 mt-4 w-2/3 min-h-48 relative border-2 border-blue-300 rounded-md">
+      <div className="flex flex-col p-2 mt-4 w-2/3 min-h-48 relative border-2 border-blue-300 rounded-md">
         <ParseText text={lesson?.text_p22} words={words} staredWords={usrStaredWordsPage2} 
           addRemoveStaredWords={(w)=> {
           usrStaredWordsPage2.find(word => word.word_id == w.id) ?
@@ -885,13 +1242,11 @@ const LessonPage: React.FC = () => {
           className="flex w-full px-2 py-1 my-1 border-b-1 border-blue-500">
          <div className="flex w-1/5 px-2 py-1 my-1">{tecWord.word}</div>
        <div className="flex flex-col w-4/5 px-2 py-1 my-1">
-        {tecWord.mean}</div></div>))}</div>)}</div></div>
+        {tecWord.mean}</div></div>))}</div>)}</div></div>)}
 
-
+      {step2Sec == 3 && (
        <div className="flex items-center flex-col w-full">
-      <div className="flex flex-col p-2 mt-8 w-2/3">
-        Please read the following text and do the next exercises.
-      </div><div className="flex flex-col p-2 mt-4 w-2/3 min-h-48 relative border-2 border-blue-300 rounded-md">
+<div className="flex flex-col p-2 mt-4 w-2/3 min-h-48 relative border-2 border-blue-300 rounded-md">
         <ParseText text={lesson?.text_p23} words={words} staredWords={usrStaredWordsPage2} 
           addRemoveStaredWords={(w)=> {
           usrStaredWordsPage2.find(word => word.word_id == w.id) ?
@@ -946,13 +1301,11 @@ const LessonPage: React.FC = () => {
           className="flex w-full px-2 py-1 my-1 border-b-1 border-blue-500">
          <div className="flex w-1/5 px-2 py-1 my-1">{tecWord.word}</div>
        <div className="flex flex-col w-4/5 px-2 py-1 my-1">
-        {tecWord.mean}</div></div>))}</div>)}</div></div>
+        {tecWord.mean}</div></div>))}</div>)}</div></div>)}
 
-
+      {step2Sec == 4 && (
       <div className="flex items-center flex-col w-full">
-      <div className="flex flex-col p-2 mt-8 w-2/3">
-        Please read the following text and do the next exercises.
-      </div><div className="flex flex-col p-2 mt-4 w-2/3 min-h-48 relative border-2 border-blue-300 rounded-md">
+      <div className="flex flex-col p-2 mt-4 w-2/3 min-h-48 relative border-2 border-blue-300 rounded-md">
         <ParseText text={lesson?.text_p24} words={words} staredWords={usrStaredWordsPage2} 
           addRemoveStaredWords={(w)=> {
           usrStaredWordsPage2.find(word => word.word_id == w.id) ?
@@ -1007,13 +1360,10 @@ const LessonPage: React.FC = () => {
           className="flex w-full px-2 py-1 my-1 border-b-1 border-blue-500">
          <div className="flex w-1/5 px-2 py-1 my-1">{tecWord.word}</div>
        <div className="flex flex-col w-4/5 px-2 py-1 my-1">
-        {tecWord.mean}</div></div>))}</div>)}</div></div>
-
-
+        {tecWord.mean}</div></div>))}</div>)}</div></div>)}
+      {step2Sec == 5 && (
      <div className="flex items-center flex-col w-full">
-      <div className="flex flex-col p-2 mt-8 w-2/3">
-        Please read the following text and do the next exercises.
-      </div><div className="flex flex-col p-2 mt-4 w-2/3 min-h-48 relative border-2 border-blue-300 rounded-md">
+      <div className="flex flex-col p-2 mt-4 w-2/3 min-h-48 relative border-2 border-blue-300 rounded-md">
         <ParseText text={lesson?.text_p25} words={words} staredWords={usrStaredWordsPage2} 
           addRemoveStaredWords={(w)=> {
           usrStaredWordsPage2.find(word => word.word_id == w.id) ?
@@ -1069,56 +1419,119 @@ const LessonPage: React.FC = () => {
          <div className="flex w-1/5 px-2 py-1 my-1">{tecWord.word}</div>
        <div className="flex flex-col w-4/5 px-2 py-1 my-1">
         {tecWord.mean}</div></div>))}</div>)}</div>
-</div>
- {usrStaredWordsPage2.length > 0 &&(<div className="flex w-full justify-center items-center">
+</div>)}
+      {step2Sec == 6 && usrStaredWordsPage2.length > 0 &&(
+        <div className="flex w-full justify-center items-center">
   <div className="flex w-2/3 items-center my-4 px-4 py-2
  border-1 border-blue-500 rounded-md">
           <MatchWordMean words={words} stared={usrStaredWordsPage2} />
-        </div></div>)}</>)}
+        </div></div>)}
+      </div>
+</div>
+ </>)}
 
-{ step == 3 && (<><div className="flex justify-center items-center flex-col w-full">
+{ step == 3 && (<><div className="flex w-full">
+  <div className="flex flex-col w-48
+     border-2 border-blue-500 rounded-md">
+       <div className="flex flex-col h-fit py-4 px-1">
+      <div className={`flex px-4 py-1 mt-2 bg-blue-50 rounded-md
+        ${step3Sec == 1 ? "text-gray-400 hover:none" :
+         "hover:text-blue-700 hover:cursor-pointer hover:shadow-md"
+     }`} onClick={()=>navStep3(1)}>Match The Peers</div>
+      <div className={`flex px-4 py-1 mt-2 bg-blue-50 rounded-md 
+      ${step3Sec == 2 ? "text-gray-400 hover:none" :
+         "hover:text-blue-700 hover:cursor-pointer hover:shadow-md"
+     }`} onClick={()=>navStep3(2)}>Fill In The Blanks</div>
+      <div className={`flex px-4 py-1 mt-2 bg-blue-50 rounded-md
+       ${step3Sec == 3 ? "text-gray-400 hover:none" :
+         "hover:text-blue-700 hover:cursor-pointer hover:shadow-md"
+     }`} onClick={()=>navStep3(3)}>True/False</div>
+    </div>
+     </div>
+     {step3Sec == 1 && (<div className="flex flex-col w-full justify-center items-center">
+      <div className="flex p-2 mt-8 w-2/3">
+        Drag & drop the meaning (at right) to suitable word (at left).
+      </div>
+  <div className="flex w-2/3 items-center my-4 px-4 py-2
+ border-1 border-blue-500 rounded-md">
+          <MatchWordMean words={words} stared={randomWordsPage3} />
+        </div></div>)}
+     {step3Sec == 2 && (<div className="flex justify-center items-center flex-col w-full">
       <div className="flex flex-col p-2 mt-4 w-2/3">
         Please fill the blanks.
-      </div>
-      <div className="flex flex-col p-2 mt-2 w-2/3 border-2 border-blue-300 rounded-md">
+      </div><div className="flex flex-col p-2 mt-2 w-2/3 border-2 border-blue-300 rounded-md">
       {usrTestFills.map((tf, ind)=>(<div key={tf.id} className="flex w-full">
         <div className="flex px-1 py-1 w-fit font-semibold text-blue-500 
         bg-blue-200 justify-center items-center mt-4">{ind+1}</div>
         <TestFill test={tf} 
-           updateUsrAnswer={(num, te, val)=>updateUsrAnswerTestFill(num, te, val)} />
-
-      </div>))}
-      <div className="flex px-2 py-1 w-fit mt-4 border-1 border-gray-300 rounded-md hover:cursor-pointer
-        hover:shadow-md"
-                onClick={submitTestFillsAnswer}>Save</div>
+           updateUsrAnswer={(num, te, val)=>updateUsrAnswerTestFill(num, te, val)} /></div>))}
+      <div className="flex w-fit"><div className="flex px-2 py-1 w-fit mt-4 border-1
+       border-gray-300 rounded-md hover:cursor-pointer hover:shadow-md"
+                onClick={submitTestFillsAnswer}>Save Answers</div>
+                {submittingTestFill && (<div className="flex px-2 py-1 w-fit mt-4">Sending...</div>)}</div>
       </div>
+      <div className="flex w-fit"><TestEvaluation data={usrTestFillsScore}/></div>
+</div>)}
+     {step3Sec == 3 && (<div className="flex justify-center items-center flex-col w-full">
+      <div className="flex flex-col p-2 mt-4 w-2/3">
+        Please state that the sentence is true or false.
+      </div>
+      <div className="flex flex-col p-2 mt-2 w-2/3 border-2 border-blue-300 rounded-md">
+      {usrTestTFs.map((ttf, ind)=>(<div key={ttf.id} className="flex w-full">
+        <div className="flex px-1 py-1 w-fit font-semibold text-blue-500 
+        bg-blue-200 justify-center items-center mt-4">{ind+1}</div>
+        <TestTF test={ttf} 
+           updateUsrAnswer={(te, val)=>updateUsrAnswerTestTF(te, val)} /></div>))}
+      <div className="flex w-fit"><div className="flex px-2 py-1 w-fit mt-4 border-1
+       border-gray-300 rounded-md hover:cursor-pointer hover:shadow-md"
+                onClick={submitTestTFsAnswer}>Save Answers</div>
+                {submittingTestTF && (<div className="flex px-2 py-1 w-fit mt-4">Sending...</div>)}</div>  
+      </div>
+<div className="flex w-fit"><TestEvaluation data={usrTestTFsScore}/></div>
+    </div>)}
+</div></>)}
 
-
-
-
-
-       </div></>)}
-
-
-
-
-
-
-
-    <div className="flex w-full px-20 justify-center items-center py-4 bg-blue-200">
-    { step >= 2 && <div onClick={prev} variant="outline"
-     className="flex w-fit border-1 border-gray-300 rounded-md bg-gray-100
-      hover:cursor-pointer hover:bg-gray-50 px-4 py-1">Previous</div>}
-      {<div className="flex w-fit">{[1,2,3,4,5].map((stp, ind)=>(<div className="flex px-4 py-1 rounded-xl
-        border-2 text-xl text-red-500 border-blue-300 ">
-        {stp}
-      </div>))}</div>}
-    { step <= 4 && <div onClick={next}
-     className="flex w-fit border-1 border-gray-300 rounded-md bg-gray-100
-      hover:cursor-pointer hover:bg-gray-50 px-4 py-1">Next</div>} 
+{ step == 4 && (<><div className="flex justify-center items-center flex-col w-full">
+      <div className="flex flex-col p-2 mt-4 w-2/3">
+        Please select the most correct reply.
+      </div>
+      <div className="flex flex-col p-2 mt-2 w-2/3 border-2 border-blue-300 rounded-md">
+      {usrTestReplies.map((tr, ind)=>(<div key={tr.id} className="flex w-full">
+        <div className="flex px-1 py-1 w-fit font-semibold text-blue-500 
+        bg-blue-200 justify-center items-center mt-4">{ind+1}</div>
+        <TestReply test={tr} 
+           updateUsrAnswer={(te, val)=>updateUsrAnswerTestReply(te, val)} /></div>))}
+      <div className="flex w-fit"><div className="flex px-2 py-1 w-fit mt-4 border-1
+       border-gray-300 rounded-md hover:cursor-pointer hover:shadow-md"
+                onClick={submitTestRepliesAnswer}>Save Answers</div>
+                {submittingTestReply && (<div className="flex px-2 py-1 w-fit mt-4">Sending...</div>)}</div>
+      </div>
+    <div className="flex w-fit"><TestEvaluation data={usrTestRepliesScore}/></div>
+  </div></>)}
+{ step == 5 && (<><div className="flex justify-center items-center flex-col w-full">
+      <div className="flex flex-col p-2 mt-4 w-2/3">
+        Please select the correct answer.
+         Note that when you saved the answers, you will not be able to answer again.
+      </div>
+      <div className="flex flex-col p-2 mt-2 w-2/3 border-2 border-blue-300 rounded-md">
+      {usrTestAsses.map((ta, ind)=>(<div key={ta.id} className="flex w-full">
+        <div className="flex px-1 py-1 w-fit font-semibold text-blue-500 
+        bg-blue-200 justify-center items-center mt-4">{ind+1}</div>
+        <TestAss test={ta} 
+           updateUsrAnswer={(ta, val)=>updateUsrAnswerTestAss(ta, val)} /></div>))}
+      <div className="flex w-fit"><div className="flex px-2 py-1 w-fit mt-4 border-1
+       border-gray-300 rounded-md hover:cursor-pointer hover:shadow-md"
+                onClick={submitTestAssesAnswer}>Save Answers</div>
+                {submittingTestAss && (<div className="flex px-2 py-1 w-fit mt-4">Sending...</div>)}</div>
+      </div>
+    <div className="flex w-fit"><TestEvaluation data={usrTestAssesScore}/></div>
+  </div></>)}
  
-    </div>
-    </>; 
+
+
+<div className="flex sticky bottom-0 w-full"><ProgressBar step={step}
+ next={next} prev={prev} setStep={setStep}/></div>
+  </>; 
 }
 
 export default LessonPage;

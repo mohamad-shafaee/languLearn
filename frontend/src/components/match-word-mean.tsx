@@ -47,7 +47,8 @@ export default function MatchWordMean(props) {
           {shuffled.map((w, i)=>(
          <div key={w.word_id} draggable={!matched[w.word_id]} 
          	onDragStart={e => onDragStart(e, w)} className="flex px-2 py-1 w-fit
-        border-2 border-gray-300 mx-4 my-2 rounded-md text-xs">{props.words.find(wo => wo.id == w.word_id)?.means.find(m => 
+        border-2 border-gray-300 mx-4 my-2 rounded-md
+         text-xs hover:cursor-pointer">{props.words.find(wo => wo.id == w.word_id)?.means.find(m => 
           m.mean != '')?.mean}</div>
         ))} 
         </div></>)}

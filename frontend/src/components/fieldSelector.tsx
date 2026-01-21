@@ -41,7 +41,9 @@ const statusStyles = {
               }}
             placeholder="Select A Field"
             arrowSize="24"/></div>
-            <div className="flex ml-2 px-4 py-2 w-[20%] hover:cursor-pointer hover:bg-gray-50 rounded-md border-1 border-gray-300" onClick={()=>{
+            <div className="flex ml-2 px-4 py-2 w-[20%] hover:cursor-pointer
+             hover:bg-gray-50 rounded-md border-1 border-gray-300" onClick={()=>{
+              if(selectedField == null){alert("Please select a new field."); return;}
               props.onAddField(selectedField);
               }}>Add</div>
           </div>

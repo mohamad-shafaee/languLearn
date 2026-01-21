@@ -129,7 +129,7 @@ class FLController extends Controller
     }
 
 
-    public function addLesson(Request $request){
+    /*public function addLesson(Request $request){
 
         $validated = $request->validate([
             'authorId' => ['required', 'integer'],
@@ -201,7 +201,7 @@ class FLController extends Controller
         }
         }  
         return response()->json(['success' => false]);
-    } 
+    }*/ 
 
     public function updateLesson(Request $request){
 
@@ -219,6 +219,7 @@ class FLController extends Controller
             'text_p24' => ['nullable', 'string'],
             'text_p25' => ['nullable', 'string'], 
             'fields' => ['required', 'array', 'min:1'],    
+            'removed_fields' => ['nullable', 'array'],    
         ]);
 
             $lesson = Lesson::find($validated['lessonId']);
@@ -237,12 +238,24 @@ class FLController extends Controller
                   'text_p25' => $validated['text_p25'],
            ]); 
 
-            FieldLesson::where('lesson_id', $validated['lessonId'])->delete();
+            //FieldLesson::where('lesson_id', $validated['lessonId'])->delete();
 
             $fields = $request->input('fields'); // this will be an array
              foreach ($fields as $field) {
-                FieldLesson::create(['field_id'=> $field['id'], 'lesson_id' => $validated['lessonId']]);
+                FieldLesson::updateOrCreate(['field_id'=> $field['id'],
+                 'lesson_id' => $validated['lessonId']], []);
             }
+
+            $rm_fields = $request->input('removed_fields');
+            if(count($rm_fields)>0){
+                foreach ($rm_fields as $field) {
+                FieldLesson::where('lesson_id', $validated['lessonId'])
+                ->where('field_id', $field['id'])
+                ->delete();
+            }
+
+            }
+            
  
             return response()->json(['success' => true]); 
     }

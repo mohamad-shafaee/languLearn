@@ -71,6 +71,7 @@ const EdLesson: React.FC = () => {
     // first all fields are taken from backend
   const [fields, setFields] = useState<Field[]>([]);
   const [selectedFields, setSelectedFields] = useState<Field[]>([]);
+  const [removedFields, setRemovedFields] = useState<Field[]>([]);
   const [lesson, setLesson] = useState<Lesson>({id: lessonId, author_id: user.id});
   const [step, setStep] = useState(1);
   const [languages, setLanguages] = useState<Language[]>([]);
@@ -673,6 +674,7 @@ const submitTechWords = async () => {
                               text_p24: lesson.text_p24 ?? "",
                               text_p25: lesson.text_p25 ?? "",
                               fields: selectedFields,
+                              removed_fields: removedFields,
                               })
       });
       if (!response.ok) {
@@ -681,7 +683,8 @@ const submitTechWords = async () => {
           }
       const result = await response.json();
       if(result.success){
-        alert("Lesson saved successfully. Just edit and save words list if you want.");
+        setRemovedFields([]);
+        alert("Lesson saved successfully.");
       } 
     } catch {} finally {setIsSubmitting(false); setSaveLessonStatus(false);};
   }; 
@@ -691,6 +694,11 @@ const submitTechWords = async () => {
     if (!exists) {
     setSelectedFields([...selectedFields, field]);
   }
+  const exists_in_rm = removedFields.some((f) => f.id === field.id);
+  if(exists_in_rm){
+    setRemovedFields(removedFields.filter((f) => f.id !== field.id));
+  }
+
   setSaveLessonStatus(true);
   };
 
@@ -699,6 +707,7 @@ const submitTechWords = async () => {
   if (confirmed) {
         const new_fs = selectedFields.filter((f) => f.id !== field.id );
         setSelectedFields(new_fs);
+        setRemovedFields([...removedFields, field]);
   }
    setSaveLessonStatus(true);
   };
@@ -1804,12 +1813,14 @@ const submitTechWords = async () => {
                 placeholder="Test True/False Body" rows="3" cols="50"  disabled={isSubmitting}></textarea>
           <div className="flex flex-col bg-gray-50 px-4 py-2 w-full">
             <label className="flex mr-2">
-              <input className="flex mr-2" type="radio" name={`testTF-${testObj.id}`} checked={testObj.answer == true}
+              <input className="flex mr-2" type="radio" name={`testTF-${testObj.id}`}
+               checked={testObj.answer == true}
                onChange={() => setTestTFAnswer(testObj, true)}/>
                 True
             </label>
             <label className="flex mr-2">
-              <input className="flex mr-2" type="radio" name={`testTF-${testObj.id}`} checked={testObj.answer == false}
+              <input className="flex mr-2" type="radio" name={`testTF-${testObj.id}`} 
+                checked={testObj.answer == false}
                onChange={() => setTestTFAnswer(testObj, false)}/>
                 False
             </label>

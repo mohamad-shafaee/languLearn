@@ -64,6 +64,13 @@ export type TestTF = {
   answer: boolean;
 }
 
+export type UsrTestTF = {
+  id: number; 
+  body: string;
+  answer: boolean;
+  usr_answer: boolean;
+}
+
 export type TestReply = {
   id: number; 
   body: string;
@@ -76,6 +83,19 @@ export type TestReply = {
   desc3: string;
 } 
 
+export type UsrTestReply = {
+  id: number; 
+  body: string;
+  reply1: string;
+  reply2: string;
+  reply3: string;
+  answer: number;
+  desc1: string;
+  desc2: string;
+  desc3: string;
+  usr_answer: number;
+} 
+
 export type TestAss = {
   id: number; 
   body: string;
@@ -84,6 +104,16 @@ export type TestAss = {
   opt3: string;
   opt4: string;
   answer: number;
+}
+
+export type UsrTestAss = {
+  id: number; 
+  body: string;
+  opt1: string;
+  opt2: string;
+  opt3: string;
+  opt4: string;
+  usr_answer: number;
 }
 
 export type UsrTestWrite = {

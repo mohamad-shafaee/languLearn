@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\FieldUser;
+use App\Models\FieldLesson;
 use App\Models\Field;
 use App\Models\User;
+use App\Models\UserLs;
 use App\Models\UIWord;
 use App\Models\TestWrite;
 use App\Models\AnswerTw;
@@ -13,7 +15,13 @@ use App\Models\UserTtw;
 use App\Models\DefDetectTest;
 use App\Models\WdmTest;
 use App\Models\TestFill;
+use App\Models\TestReply;
+use App\Models\TestAss;
+use App\Models\TestTf;
 use App\Models\AnswerTf;
+use App\Models\AnswerTtf;
+use App\Models\AnswerTa;
+use App\Models\AnswerTr;
 use Illuminate\Support\Facades\Log;
 
 class FLUController extends Controller
@@ -34,19 +42,32 @@ class FLUController extends Controller
 
         $add_fields = $validated['addFields'] ?? [];
         $rm_fields = $validated['removedFields'] ?? [];
-        
-            foreach($add_fields as $field){
-            FieldUser::updateOrCreate(['field_id'=>$field['id'], 'user_id' => $validated['userId']],['priority' => 1]); //(priority) 1: working, 10: archived
-        }
-        
 
-        
+            foreach($add_fields as $field){
+                $f = Field::with(['lessons'])->findOrFail($field['id']);
+                $lessons = $f->lessons->map(function ($lesson){
+                    return ['id'=> $lesson->id,
+                            'order' => $lesson->pivot->lesson_order];
+                });
+                $first_lesson_id = $this->findFirstLessonId($lessons);
+                FieldUser::updateOrCreate(['field_id'=>$field['id'], 'user_id' => $validated['userId']],['priority' => 1, 'last_lesson_id'=>$first_lesson_id, 'last_lesson_stat'=> 'under']); //(priority) 1: working, 10: archived
+        } 
             foreach($rm_fields as $field){
             FieldUser::updateOrCreate(['field_id'=>$field['id'], 'user_id' => $validated['userId']],['priority' => 10]); 
-        }
-        
-        
+        } 
         return response()->json(['success' => true]);
+    }
+
+    public function findFirstLessonId($lessons){
+        $m_o = $lessons[0]['order'];
+        $id_m = $lessons[0]['id'];
+        foreach($lessons as $lesson){
+            if($lesson['order'] < $m_o){
+                $m_o = $lesson['order'];
+                $id_m = $lesson['id']; 
+            }
+        }
+        return $id_m;
     }
 
     public function getUserFields(Request $request){
@@ -259,8 +280,7 @@ class FLUController extends Controller
     }
 
     public function saveUsrTestFillsAnswer(Request $request)
-    {
-        
+    { 
         $validated = $request->validate([
             'lessonId' => ['required', 'integer'],
             'tests' => ['nullable', 'array'],
@@ -290,11 +310,433 @@ class FLUController extends Controller
         AnswerTf::where('user_id', auth()->id())->where('lesson_id', $validated['lessonId'])->delete();
 
         AnswerTf::insert($data);
-        return response()->json(['success' => true]);
-
-
-        
+        return response()->json(['success' => true]);        
     }
+
+    public function getUsrTestTFs(Request $request){
+        $validated = $request->validate([
+            'lessonId' => ['required', 'integer'],
+        ]);
+
+        $user_id = auth()->id();
+        $tests = TestTf::where('lesson_id', $validated['lessonId'])
+        ->with(['answers'=> function ($q) use ($user_id) {
+            $q->where('user_id', $user_id);
+        }])->get()
+        ->map(function ($test) {
+            return [
+                'id' => $test->id,
+                'body' => $test->body,
+                'answer' => $test->answer,
+                'usr_answer' => optional($test->answers->first())->answer,
+            ];
+        });
+
+        return response()->json(['tests' => $tests]); 
+    }
+
+    public function saveUsrTestTFsAnswer(Request $request){
+        $validated = $request->validate([
+            'lessonId' => ['required', 'integer'],
+            'tests' => ['nullable', 'array'],
+            'tests.*.id' => ['required', 'integer'],
+            'tests.*.body' => ['required', 'string'],
+            'tests.*.answer' => ['required', 'boolean'],
+            'tests.*.usr_answer' => ['nullable', 'boolean'],
+        ]);
+
+        $data = [];
+        $tests = $validated['tests'];
+
+        foreach ($tests as $test) {
+           $data[] = [
+            'user_id'   => auth()->id(),
+            'lesson_id' =>  $validated['lessonId'],
+            'test_tf_id'   => $test['id'],
+            'answer'      => $test['usr_answer'],
+            'created_at' => now(),
+            'updated_at' => now(),
+          ];
+        }
+
+        AnswerTtf::where('user_id', auth()->id())->where('lesson_id', $validated['lessonId'])->delete();
+
+        AnswerTtf::insert($data);
+        return response()->json(['success' => true]); 
+    } 
+
+    public function getUsrTestReplies(Request $request){
+        $validated = $request->validate([
+            'lessonId' => ['required', 'integer'],
+        ]);
+
+        $user_id = auth()->id();
+        $tests = TestReply::where('lesson_id', $validated['lessonId'])
+        ->with(['answers'=> function ($q) use ($user_id) {
+            $q->where('user_id', $user_id);
+        }])->get()
+        ->map(function ($test) {
+            return [
+                'id' => $test->id,
+                'body' => $test->body,
+                'reply1' => $test->reply1,
+                'reply2' => $test->reply2,
+                'reply3' => $test->reply3,
+                'answer' => $test->answer,
+                'desc1' => $test->desc1,
+                'desc2' => $test->desc2,
+                'desc3' => $test->desc3,
+                'usr_answer' => optional($test->answers->first())->answer,
+            ];
+        });
+
+        return response()->json(['tests' => $tests]); 
+    }
+
+    public function saveUsrTestRepliesAnswer(Request $request){
+        $validated = $request->validate([
+            'lessonId' => ['required', 'integer'],
+            'tests' => ['nullable', 'array'],
+            'tests.*.id' => ['required', 'integer'],
+            'tests.*.usr_answer' => ['required', 'integer'],
+        ]);
+
+        $data = [];
+        $tests = $validated['tests'];
+
+        foreach ($tests as $test) {
+           $data[] = [
+            'user_id'   => auth()->id(),
+            'lesson_id' =>  $validated['lessonId'],
+            'test_reply_id'   => $test['id'],
+            'answer'      => $test['usr_answer'],
+            'created_at' => now(),
+            'updated_at' => now(),
+          ];
+        }
+
+        AnswerTr::where('user_id', auth()->id())->where('lesson_id', $validated['lessonId'])->delete();
+
+        AnswerTr::insert($data);
+        return response()->json(['success' => true]); 
+    } 
+
+    public function getUsrTestAsses(Request $request){
+        $validated = $request->validate([
+            'lessonId' => ['required', 'integer'],
+        ]);
+
+        $user_id = auth()->id();
+        $tests = TestAss::where('lesson_id', $validated['lessonId'])
+        ->with(['answers'=> function ($q) use ($user_id) {
+            $q->where('user_id', $user_id);
+        }])->get()
+        ->map(function ($test) {
+            return [
+                'id' => $test->id,
+                'body' => $test->body,
+                'opt1' => $test->opt1,
+                'opt2' => $test->opt2,
+                'opt3' => $test->opt3,
+                'opt4' => $test->opt4,
+                'usr_answer' => optional($test->answers->first())->answer,
+            ];
+        });
+
+        return response()->json(['tests' => $tests]); 
+    } 
+
+    public function saveUsrTestAssesAnswer(Request $request){
+        $validated = $request->validate([
+            'lessonId' => ['required', 'integer'],
+            'tests' => ['nullable', 'array'],
+            'tests.*.id' => ['required', 'integer'],
+            'tests.*.usr_answer' => ['nullable', 'integer'],
+        ]);
+
+        $data = [];
+        $tests = $validated['tests'];
+
+        foreach ($tests as $test) {
+           $data[] = [
+            'user_id'   => auth()->id(),
+            'lesson_id' =>  $validated['lessonId'],
+            'test_ass_id'   => $test['id'],
+            'answer'      => $test['usr_answer'],
+            'created_at' => now(),
+            'updated_at' => now(),
+          ];
+        }
+
+        AnswerTa::where('user_id', auth()->id())->where('lesson_id', $validated['lessonId'])->delete();
+
+        AnswerTa::insert($data);
+        return response()->json(['success' => true]);
+    } 
+
+    public function getUsrTestAssesScore(Request $request){
+        $validated = $request->validate([
+            'lessonId' => ['required', 'integer'],
+        ]);
+
+        $res = $this->calcUsrTestAssesScore($validated['lessonId']);
+        return response()->json($res);
+    }
+
+    public function getUsrTestRepliesScore(Request $request){
+        $validated = $request->validate([
+            'lessonId' => ['required', 'integer'],
+        ]);
+
+        $res = $this->calcUsrTestRepliesScore($validated['lessonId']);
+        return response()->json($res);
+    }
+
+    public function getUsrTestTFsScore(Request $request){
+        $validated = $request->validate([
+            'lessonId' => ['required', 'integer'],
+        ]);
+
+        $res = $this->calcUsrTestTFsScore($validated['lessonId']);
+        return response()->json($res);
+    }
+
+    public function getUsrTestFillsScore(Request $request){
+        $validated = $request->validate([
+            'lessonId' => ['required', 'integer'],
+        ]);
+
+        $res = $this->calcUsrTestFillsScore($validated['lessonId']);
+        return response()->json($res);
+    }
+
+    public function updateFieldAndLessonUsrStatus(Request $request){
+        $validated = $request->validate([
+            'lessonId' => ['required', 'integer'],
+            'fieldId' => ['required', 'integer'],
+        ]);
+
+        $scores = $this->checkFieldAndLessonUsrStatus($validated['lessonId']);
+        $passed = false;
+        $fill_sc = $scores['fill']['correct']/$scores['fill']['all'];
+        $reply_sc = $scores['reply']['correct']/$scores['reply']['all'];
+        $tf_sc = $scores['tf']['correct']/$scores['tf']['all'];
+        $ass_sc = $scores['ass']['correct']/$scores['ass']['all'];
+        if($fill_sc >= 0.7 && $reply_sc >= 0.7 && $tf_sc >= 0.7 && $ass_sc >= 0.7){
+            $passed = true;
+        }
+
+
+        //$passed = $this->checkFieldUsrStatus($validated['lessonId']);
+        if(!$passed){ return response()->json(['passed'=> $passed]); }
+
+        $fl = FieldLesson::where('field_id', $validated['fieldId'])
+        ->where('lesson_id', $validated['lessonId'])->first();
+        $lesson_order = 0;
+        $prev_last_lesson_order = 0;
+        if($fl){
+            $lesson_order = $fl->lesson_order;
+        }
+
+        $fu = FieldUser::where('user_id', auth()->id())->where('field_id', $validated['fieldId'])->first();
+        $prev_last_lesson_id = 0;
+        $prev_last_lesson_stat = '';
+
+        if($fu){
+            $prev_last_lesson_id = $fu->last_lesson_id;
+            //$prev_last_lesson_stat = $fu->last_lesson_stat;
+            $prev_fl = FieldLesson::where('field_id', $validated['fieldId'])
+            ->where('lesson_id', $prev_last_lesson_id)->first();
+            if($prev_fl){
+                $prev_last_lesson_order = $prev_fl->lesson_order;
+            }
+        }
+
+        //if($prev_last_lesson_order > $lesson_order){ return response()->json(['passed'=> false]); }
+
+        if($prev_last_lesson_order == $lesson_order){ 
+           $next_lesson_id = FieldLesson::where('field_id', $validated['fieldId'])
+            ->where('lesson_order', '>', $lesson_order)
+            ->orderBy('lesson_order', 'asc')->first()->lesson_id;
+
+            FieldUser::updateOrCreate(['field_id'=> $validated['fieldId'], 'user_id'=> auth()->id()],
+                 ['last_lesson_id'=> $next_lesson_id, 'last_lesson_stat'=> 'under']);
+             }
+
+             Log::debug("Scores 3 ". $scores['fill']['correct'] . " *** ". $scores['fill']['all']);
+
+             $mean_sc = ($fill_sc + $reply_sc + $tf_sc + $ass_sc)/4;
+             Log::debug("Scores mean ". $mean_sc);
+             UserLs::updateOrCreate(['user_id'=> auth()->id(),
+              'lesson_id'=> $validated['lessonId']], ['score'=> $mean_sc]);
+             
+
+
+        return response()->json(['passed'=> $passed]);
+    }
+
+
+
+    public function checkFieldAndLessonUsrStatus($lessonId){
+
+        $fill_score = $this->calcUsrTestFillsScore($lessonId);
+        $reply_score = $this->calcUsrTestRepliesScore($lessonId);
+        $tf_score = $this->calcUsrTestTFsScore($lessonId);
+        $ass_score = $this->calcUsrTestAssesScore($lessonId);
+
+        $scores = ['fill'=>['all'=>$fill_score['all'], 'correct'=>$fill_score['correct']],
+                   'reply'=>['all'=>$reply_score['all'], 'correct'=>$reply_score['correct']],
+                   'tf'=>['all'=>$tf_score['all'], 'correct'=>$tf_score['correct']],
+                   'ass'=>['all'=>$ass_score['all'], 'correct'=>$ass_score['correct']]
+               ];
+
+        //$passed = false;
+
+        /*if($fill_score['correct'] >= 0.7 && $reply_score['correct'] >= 0.7
+         && $tf_score['correct'] >= 0.7 && $ass_score['correct'] >= 0.7 ){
+            $passed = true;
+        }*/
+
+        //return $passed;
+        return $scores;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public function calcUsrTestFillsScore($lessonId){
+
+        $user_id = auth()->id();
+        $score_arr = TestFill::where('lesson_id', $lessonId)
+        ->with(['answers'=> function ($q) use ($user_id) {
+            $q->where('user_id', $user_id);
+        }])->get()
+        ->map(function ($test) {
+
+            $is_wrong = ($test->answers->first() && 
+                ($test->fill1 != $test->answers->first()->answer1 ||
+                $test->fill2 != $test->answers->first()->answer2)) ? 1 : 0;
+
+            $is_correct = ($test->fill1 == optional($test->answers->first())->answer1 &&
+                $test->fill2 == optional($test->answers->first())->answer2);
+
+            return [
+                'correct_i' => $is_correct ? 1 : 0,
+                'wrong_i' => $is_wrong,
+            ];
+        });
+        $corrects = 0;
+        $wrongs = 0;
+        foreach($score_arr as $sc){
+            $corrects = $corrects + $sc['correct_i'];
+            $wrongs = $wrongs + $sc['wrong_i'];
+        }
+
+        $all = count($score_arr);
+        $res = ['all'=> $all, 'wrong'=> $wrongs, 'correct'=> $corrects];
+        return $res;
+    }
+
+    public function calcUsrTestTFsScore($lessonId){
+
+        $user_id = auth()->id();
+        $score_arr = TestTf::where('lesson_id', $lessonId)
+        ->with(['answers'=> function ($q) use ($user_id) {
+            $q->where('user_id', $user_id);
+        }])->get()
+        ->map(function ($test) {
+
+            $is_wrong = ($test->answers->first() && 
+                $test->answer != $test->answers->first()->answer) ? 1 : 0;
+
+            return [
+                'correct_i' => $test->answer == optional($test->answers->first())->answer ? 1 : 0,
+                'wrong_i' => $is_wrong,
+            ];
+        });
+        $corrects = 0;
+        $wrongs = 0;
+        foreach($score_arr as $sc){
+            $corrects = $corrects + $sc['correct_i'];
+            $wrongs = $wrongs + $sc['wrong_i'];
+        }
+
+        $all = count($score_arr);
+        $res = ['all'=> $all, 'wrong'=> $wrongs, 'correct'=> $corrects];
+        return $res;
+    }
+
+    public function calcUsrTestRepliesScore($lessonId){
+
+        $user_id = auth()->id();
+        $score_arr = TestReply::where('lesson_id', $lessonId)
+        ->with(['answers'=> function ($q) use ($user_id) {
+            $q->where('user_id', $user_id);
+        }])->get()
+        ->map(function ($test) {
+
+            $is_wrong = (optional($test->answers->first())->answer && 
+                $test->answer != optional($test->answers->first())->answer) ? 1 : 0;
+
+            return [
+                'correct_i' => $test->answer == optional($test->answers->first())->answer ? 1 : 0,
+                'wrong_i' => $is_wrong,
+            ];
+        });
+        $corrects = 0;
+        $wrongs = 0;
+        foreach($score_arr as $sc){
+            $corrects = $corrects + $sc['correct_i'];
+            $wrongs = $wrongs + $sc['wrong_i'];
+        }
+
+        $all = count($score_arr);
+        $res = ['all'=> $all, 'wrong'=> $wrongs, 'correct'=> $corrects];
+        return $res;
+    }
+
+    public function calcUsrTestAssesScore($lessonId){
+
+        $user_id = auth()->id();
+        $score_arr = TestAss::where('lesson_id', $lessonId)
+        ->with(['answers'=> function ($q) use ($user_id) {
+            $q->where('user_id', $user_id);
+        }])->get()
+        ->map(function ($test) {
+
+            $is_wrong = (optional($test->answers->first())->answer && 
+                $test->answer != optional($test->answers->first())->answer) ? 1 : 0;
+
+            return [
+                'correct_i' => $test->answer == optional($test->answers->first())->answer ? 1 : 0,
+                'wrong_i' => $is_wrong,
+            ];
+        });
+        $corrects = 0;
+        $wrongs = 0;
+        foreach($score_arr as $sc){
+            $corrects = $corrects + $sc['correct_i'];
+            $wrongs = $wrongs + $sc['wrong_i'];
+        }
+
+        $all = count($score_arr);
+        $res = ['all'=> $all, 'wrong'=> $wrongs, 'correct'=> $corrects];
+        return $res;
+    }
+
+
+
 
 
 }

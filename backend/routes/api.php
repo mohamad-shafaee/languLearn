@@ -54,7 +54,7 @@ Route::middleware('auth:sanctum')->post('/upload-lesson-image', [FLController::c
 Route::middleware('auth:sanctum')->post('/upload-lesson-words', [FLController::class, 'saveLessonWords']);
 Route::middleware('auth:sanctum')->post('/upload-lesson-tech-words', [FLController::class, 'saveLessonTechWords']);
 //Route::middleware('auth:sanctum')->post('/upload-lesson-tech-words', [FLController::class, 'saveLessonTechWords']);
-Route::middleware('auth:sanctum')->post('/add-lesson', [FLController::class, 'addLesson']);
+//Route::middleware('auth:sanctum')->post('/add-lesson', [FLController::class, 'addLesson']);
 //Route::middleware('auth:sanctum')->post('/get-lessons-cards', [FLController::class, 'getLessonsCards']);
 Route::middleware('auth:sanctum')->post('/get-lessons-cards-by-field', [FLController::class, 'getLessonsCardsByField']);
 Route::middleware('auth:sanctum')->post('/update-lessons-orders', [FLController::class, 'updateLessonsOrders']);
@@ -126,7 +126,24 @@ Route::middleware('auth:sanctum')->post('/get-user-dd-tests', [FLUController::cl
 Route::middleware('auth:sanctum')->post('/get-user-wdm-tests', [FLUController::class, 'getUsrWdmTests']);
 
 Route::middleware('auth:sanctum')->post('/get-user-test-fills', [FLUController::class, 'getUsrTestFills']);
+
 Route::middleware('auth:sanctum')->post('/save-user-testfills-answer', [FLUController::class, 'saveUsrTestFillsAnswer']);
+
+Route::middleware('auth:sanctum')->post('/get-user-test-tfs', [FLUController::class, 'getUsrTestTFs']);
+Route::middleware('auth:sanctum')->post('/save-user-testtfs-answer', [FLUController::class, 'saveUsrTestTFsAnswer']);
+
+Route::middleware('auth:sanctum')->post('/get-user-test-replies', [FLUController::class, 'getUsrTestReplies']);
+Route::middleware('auth:sanctum')->post('/save-user-testreplies-answer', [FLUController::class, 'saveUsrTestRepliesAnswer']);
+
+Route::middleware('auth:sanctum')->post('/get-user-test-asses', [FLUController::class, 'getUsrTestAsses']);
+Route::middleware('auth:sanctum')->post('/save-user-testasses-answer', [FLUController::class, 'saveUsrTestAssesAnswer']);
+
+Route::middleware('auth:sanctum')->post('/get-user-test-asses-score', [FLUController::class, 'getUsrTestAssesScore']);
+Route::middleware('auth:sanctum')->post('/get-user-test-replies-score', [FLUController::class, 'getUsrTestRepliesScore']);
+Route::middleware('auth:sanctum')->post('/get-user-test-tfs-score', [FLUController::class, 'getUsrTestTFsScore']);
+Route::middleware('auth:sanctum')->post('/get-user-test-fills-score', [FLUController::class, 'getUsrTestFillsScore']);
+Route::middleware('auth:sanctum')->post('/update-field-user-status', [FLUController::class, 'updateFieldAndLessonUsrStatus']);
+
 
 
 

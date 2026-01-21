@@ -283,7 +283,7 @@ const CreateField: React.FC = () => {
      {fields.length > 0 && fields.map((item, index)=>{ return(
       <div key={item.id} className="flex border-1 border-gray-500 rounded-md">
         <div className="flex items-center justify-center w-8 bg-gray-100 text-blue-500">{index + 1}</div>
-        <div className="flex w-12 h-12"><img src={item.img_path ?? ""} alt="Lesson Image"
+        <div className="flex w-12 h-12"><img src={item.img_path ?? ""} alt="Field Image"
           className="flex w-12 h-12 rounded-md ml-2 mt-4"/></div>
     <div className="flex flex-col py-2 px-4 w-[50%] ">
       <div className="flex w-full pb-2 border-b-1">{item.name}</div>

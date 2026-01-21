@@ -32,6 +32,7 @@ const UserWorking: React.FC = () => {
   const [selectFieldNeed, setSelectFieldNeed] = useState<boolean>(false);
   const [addRemoveFieldOpen, setAddRemoveFieldOpen] = useState<boolean>(false);
   const [usrLessons, setUsrLessons] = useState<Lesson[]>([]);
+  const [usrLastLessonOrder, setUsrLastLessonOrder] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [refreshPage, setRefreshPage] = useState<boolean>(false);
   const [usrSelectedFields, setUsrSelectedFields] = useState<Field[]>([]);
@@ -39,21 +40,9 @@ const UserWorking: React.FC = () => {
   const [allFields, setAllFields] = useState<Field[]>([]);
   const needsApplyFields = useRef(false);
 
+
   const navigate = useNavigate();
-  // I get all user lessons and in fron end when click on a field, filter the all lessons to this field
-
-//Steps:
-// 1- first the count of fields of the user if be 0,
-// a view that encourages user to select a field will be shown to user.
-// when user selects one or more fields (it may be restricted that select one or more),
-// and confirms the fields, the view shows a panel for user fields and the information of it
-// and a panel shows lessons of that field (the selected field style bold and blue color).
-// The lessons that are read are determined by color and style and the lessons
-// that are still not openable too. A color ribon and a score may shows the user quality of the lesson.
-// each lesson could be set a reminder later by email for more read at a later time.  
-//when a lesson is clicked by user, a page opens that user can read and excercise the lesson.
-// after the lesson ends the user in directed to this working page again. 
-
+  
 // a third panel for learning words that are saved in user_ttws tables like a lightner box.
 
   // a panel for teacher may be created. Teacher could select lessons from various fields as a 
@@ -81,8 +70,7 @@ const UserWorking: React.FC = () => {
 
         } catch {} finally {}
         };
-
-
+ 
     const getUsrFields = async () => {
             try {
        setIsSubmitting(true);
@@ -104,12 +92,9 @@ const UserWorking: React.FC = () => {
 
       } else {
         //await getAllFields();
-        setSelectFieldNeed(true);
-        
-
+        setSelectFieldNeed(true); 
       }
-    } catch {} finally {setIsSubmitting(false);};
-
+    } catch {} finally {setIsSubmitting(false);}; 
     };
 
     getAllFields();
@@ -145,7 +130,18 @@ const UserWorking: React.FC = () => {
     if(currentUsrField){
       getUserLessons();
     }
-  }, [currentUsrField, refreshPage]);
+
+  }, [currentUsrField]);
+
+  useEffect(()=>{
+    const updateUsrLastLessonOrder = () => {
+      setUsrLastLessonOrder(usrLessons.find(le => le.id == currentUsrField.last_lesson_id).order);
+    }
+
+    if(usrLessons.length > 0){
+      updateUsrLastLessonOrder();
+    }
+  }, [usrLessons]);
 
   const removeFromUsrSelectedField = (field) => {
     const confirmed = window.confirm("Are you sure to remove the field?");
@@ -237,23 +233,26 @@ const UserWorking: React.FC = () => {
   };
 
   const openLesson = (lesson) => {
-    const access = true;
+    // access control at route level like protected route
+    const access = user.is_premium;
     if(!access){
       //navigate to buy premium page
       //navigate(`/premium-panels`);
 
-    }
-
-    const last_lesson = usrLessons.find(item => item.id == currentUsrField.last_lesson_id);
+    } else {
+      const last_lesson = usrLessons.find(item => item.id == currentUsrField.last_lesson_id);
     const is_open = !currentUsrField.has_order ? true : 
-    (currentUsrField.last_lesson_stat == "passed" ? (lesson.order <= (last_lesson.order + 1)) : 
-      (lesson.order <= last_lesson.order));
+      (lesson.order <= last_lesson.order);
 
     if(!is_open){
       alert("You should pass prerequired lessons first!");
       return;
     }
     navigate(`/lesson-page/${currentUsrField.id}/${lesson.id}`);
+
+    }
+
+    
   };
    
   return (<div className="flex flex-col w-full items-center justify-center">
@@ -280,18 +279,43 @@ const UserWorking: React.FC = () => {
           onClick={()=> {setUsrSelectedFields(usrFields); setAddRemoveFieldOpen(true)}}>
           Add/Remove Fields</div></div>
         {usrFields.map((f, i) => (<div key={f.id} 
-          className={`flex px-2 py-1 mx-2 mt-2 border-2
+          className={`flex w-fit px-1 py-1 mt-4 mx-2 border-2 items-center justify-center
         rounded-md hover:cursor-pointer hover:text-blue-500
          overflow-hidden ${currentUsrField?.id == f.id ? 
           "border-blue-500 text-blue-500 shadow-md" 
           : "border-gray-300 text-black-500 hover:shadow-lg transition"}`}
         onClick={()=> setCurrentUsrField(f)}>
-          {f.name + " " + f.last_lesson_id + " " + f.last_lesson_stat}</div>))}
+        <div className="flex w-12 h-12"><img src={f.img_path ?? ""} alt="Field Image"
+          className="flex w-12 h-12 rounded-md"/></div>
+    <div className="flex flex-col py-1 px-2 w-fit">
+      <div className="flex w-fit">{f.name}</div>
+    </div>
+  </div>))}
       </div>
       <div className="flex flex-col border-2 border-gray-300 rounded-md h-screen py-8 px-4 w-[85%]">
         {usrLessons.map((item, index)=>(<div key={item.id} 
-          className="flex w-full px-4 py-1 border-1 border-red-300
-           rounded-md hover:cursor-pointer" onClick={()=>openLesson(item)}>{item.title}</div>))}
+          className={`flex w-full px-1 py-1 mt-4 mx-2 border-2
+        rounded-md overflow-hidden ${item.id == currentUsrField.last_lesson_id ? 
+          "border-blue-500 text-blue-500 shadow-md hover:cursor-pointer hover:text-blue-500" 
+          : ""} ${item.order <= usrLastLessonOrder ? 
+          "hover:cursor-pointer hover:text-blue-500 hover:shadow-lg border-gray-300 text-black-500" : 
+          "border-gray-300 text-gray-400 hover:none"}`}
+        onClick={()=>openLesson(item)}>
+        <div className="flex w-12 h-12"><img src={item.img_path ?? ""} alt="Lesson Image"
+          className="flex w-12 h-12 rounded-md"/></div>
+    <div className="flex flex-col py-1 px-2 w-fit">
+      <div className="flex w-fit">{item.title}</div>
+      <div className="flex text-xs w-fit">
+        <div className="flex text-xs w-fit">{item.score ?? ''}</div>
+        {item.id == currentUsrField.last_lesson_id 
+        && (<div className="flex text-xs px-1 text-green-700 w-fit">current</div>)}
+        {item.order > usrLastLessonOrder 
+        && (<div className="flex text-xs px-1 text-red-500 w-fit">close</div>)}
+        {user.is_premium 
+        && (<div className="flex text-xs px-1 text-red-500 w-fit">access</div>)}
+      </div>
+    </div>
+  </div>))}
       </div>
     </div>)} </div>
   );

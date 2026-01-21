@@ -42,7 +42,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   //const [token, setToken] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(() => {
   return localStorage.getItem("auth_token");
-}); 
+});
+
+//React state doesn’t automatically update if localStorage changes outside the current tab or page.
+//The storage event fires anytime localStorage changes in another tab, so your app reacts immediately
+useEffect(() => {
+  const handleStorage = (e: StorageEvent) => {
+    if (e.key === "auth_token") {
+      if (!e.newValue) {
+        // token removed in another tab → log out locally
+        setUser(null);
+        setToken(null);
+      } else {
+        // token added/changed → refetch user
+        setToken(e.newValue);
+      }
+    }
+  };
+  window.addEventListener("storage", handleStorage);
+  return () => window.removeEventListener("storage", handleStorage);
+}, []);
+
 
   // Fetch user when app starts (if session cookie/token is valid)
   useEffect(() => {
@@ -51,15 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setLoading(false);
     return;
-  }
-
-
-    /*const savedToken = localStorage.getItem("auth_token");
-    if(savedToken && !token){
-      setToken(savedToken);
-      return;
-    }*/  /*double save with loginWithToken()*/
-
+  } 
       const fetchUser = async () => {
         try { 
            const userResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/user`, {
@@ -85,12 +97,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } catch {
                        setUser(null);
                        setToken(null);
+                       localStorage.removeItem("auth_token");
             } finally {
                        setLoading(false);
       }
     }; 
-     fetchUser();
-     //if(token){fetchUser();} else {setLoading(false);}
+     fetchUser(); 
   }, [token]); 
 
   // Register
@@ -129,16 +141,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         setUser(null);
         setToken(null);
-        localStorage.setItem("auth_token", null);
+        localStorage.removeItem("auth_token");
       }
     } catch {
         setUser(null);
         setToken(null);
-        localStorage.setItem("auth_token", null);
+        localStorage.removeItem("auth_token");
         return { success: false, errors: ["Something went wrong"]};
-    } finally {
-        setLoading(false);
-      }
+    } finally { }
   }
 
   // Login via email & password
@@ -170,7 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             localStorage.setItem("auth_token", ctoken);
 
             // Fetch user details after login success
-             const userResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/user`, {
+             /*const userResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/user`, {
              method: "GET",
              headers: { Accept: "application/json",
                  "Authorization": `Bearer ${ctoken}` // send token here 
@@ -178,16 +188,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
              });
 
            const userData = await userResponse.json();
-           setUser(userData.user);
+           setUser(userData.user);*/
            return { success: true, errors: []};
           }
     } catch {
            setUser(null);
            setToken(null);
-           localStorage.setItem("auth_token", null);
+           localStorage.removeItem("auth_token");
            return { success: false, errors: ["Something went wrong!"]};  
-    } finally {
-        setLoading(false);
+    } finally { 
       }
   };
 
@@ -195,23 +204,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try{
       const savedToken = localStorage.getItem("auth_token");
-      await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logout`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/logout`, {
                method: "POST",
                headers: { "Accept": "application/json",
                  "Authorization": `Bearer ${savedToken}` // send token here 
                  },
               });
+     } catch (er) { }
 
-      
-
-    } catch (er) {
-
-    }
-    
     // Clear auth state ALWAYS, even if fetch fails
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem("auth_token");
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem("auth_token"); 
     
   };
 

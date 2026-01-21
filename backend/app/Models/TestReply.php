@@ -29,6 +29,11 @@ class TestReply extends Model
     return $this->belongsTo(Lesson::class);
     }
 
+    public function answers()
+    {
+        return $this->hasMany(AnswerTr::class);
+    }
+
     /*public function author()
     {
     return $this->belongsTo(User::class, 'author_id');

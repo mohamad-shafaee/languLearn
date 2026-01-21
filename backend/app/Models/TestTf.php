@@ -23,6 +23,11 @@ class TestTf extends Model
     return $this->belongsTo(Lesson::class);
     }
 
+    public function answers()
+    {
+        return $this->hasMany(AnswerTtf::class);
+    }
+
    /* public function author()
     {
     return $this->belongsTo(User::class, 'author_id');
