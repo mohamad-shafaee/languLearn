@@ -24,8 +24,7 @@ class Field extends Model
     public function lessons()
     {
         return $this->belongsToMany(Lesson::class, 'field_lessons')
-        ->withPivot('lesson_order')
-        ->orderBy('field_lessons.lesson_order')
+        ->withPivot('is_open')
         ->using(FieldLesson::class) 
         ->withTimestamps();
     }
@@ -34,7 +33,7 @@ class Field extends Model
     {
         return $this->belongsToMany(User::class, 'field_users')
         ->using(FieldUser::class)
-        ->withPivot('priority', 'last_lesson_id', 'last_lesson_stat')
+        ->withPivot('priority', 'last_lesson_id')
         ->withTimestamps();
     }
 

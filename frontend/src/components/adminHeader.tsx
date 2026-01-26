@@ -30,11 +30,13 @@ const Header: React.FC = () => {
         {/* DESKTOP NAV */}
         <nav className="hidden md:flex gap-6 text-slate-700 mr-auto">
           <a href="#" className="hover:text-sky-600" onClick={(e)=>goToPage(e, 'admin/field/create')}>
-            Create Field</a>
+            Manage Fields</a>
           <a href="#" className="hover:text-sky-600" onClick={(e)=>goToPage(e, 'admin/lesson/create')}>
             Create Lesson</a> 
           <a href="#" className="hover:text-sky-600" onClick={(e)=>goToPage(e, 'admin/mylessons')}>
             My Lessons</a> 
+          <a href="#" className="hover:text-sky-600" onClick={(e)=>goToPage(e, 'admin/plan/create')}>
+            Manage Plans</a>
         </nav>
         {/* Login/Register - User menu */}
         <div className="mr-auto">
@@ -59,11 +61,13 @@ const Header: React.FC = () => {
       {open && (
         <div className="md:hidden bg-white border-t p-4 space-y-3">
           <a href="#" className="hover:text-sky-600" onClick={(e)=>goToPage(e, 'admin/field/create')}>
-            Create Field</a>
+            Manage Fields</a>
           <a href="#" className="hover:text-sky-600" onClick={(e)=>goToPage(e, 'admin/lesson/create')}>
             Create Lesson</a> 
           <a href="#" className="hover:text-sky-600" 
-            onClick={(e)=>goToPage(e, 'admin/mylessons')}>My Lessons</a> 
+            onClick={(e)=>goToPage(e, 'admin/mylessons')}>My Lessons</a>
+          <a href="#" className="hover:text-sky-600" onClick={(e)=>goToPage(e, 'admin/plan/create')}>
+            Manage Plans</a> 
         </div>
       )}
     </header>

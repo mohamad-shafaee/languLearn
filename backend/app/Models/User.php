@@ -68,11 +68,16 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
         return $this->hasMany(Lesson::class, 'author_id');
       }
 
+    public function createdPlans()  // lessons written by user
+     {
+        return $this->hasMany(Plan::class, 'author_id');
+      }
+
     public function fields()  //fields that user is taken
     {
         return $this->belongsToMany(Field::class, 'field_users')
         ->using(FieldUser::class)
-        ->withPivot('priority', 'last_lesson_id', 'last_lesson_stat')
+        ->withPivot('priority', 'last_lesson_id')
         ->withTimestamps();
     }
 
@@ -129,7 +134,7 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
 
     public function isPremium(): bool {
         //return (bool) $this->activeSubscription();
-        return true;
+        return false;
       }
 
     public function uiWords()

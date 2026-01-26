@@ -21,8 +21,8 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="border-1 border-blue-700 bg-blue-50 w-full">
-      <div className="border-2 border-red-500 w-full mx-auto
+    <header className="border-1 sticky top-0 border-blue-700 bg-blue-50 bg-opacity-100 w-full h-15 z-100">
+      <div className="border-2 h-full border-red-500 w-full mx-auto
        px-4 py-3 flex items-center justify-between bg-white/50 md:justify-start">
         {/* MOBILE: Left side - Hamburger */}
         <button 
@@ -46,7 +46,8 @@ const Header: React.FC = () => {
                   <ChevronDown size={24} color="green"/></div></div>
               {userOpen && (<div className="absolute bg-white/50 mt-2 bg-white p-2 rounded w-36">
                 <div className="block text-left text-sm mx-0 w-full mt-2 pr-8" onClick={logout}>Logout</div>
-                <div className="block text-left text-sm mx-0 w-full mt-2 pr-8" onClick={(e)=>goToPage(e, 'profile')}>Profile</div>
+                <div className="block text-left text-sm mx-0 w-full mt-2 pr-8" 
+                  onClick={(e)=>goToPage(e, `profile/${user.id}`)}>Profile</div>
               </div>)}
             </div>
           ) : (

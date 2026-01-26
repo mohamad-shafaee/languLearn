@@ -45,12 +45,11 @@ class FLUController extends Controller
 
             foreach($add_fields as $field){
                 $f = Field::with(['lessons'])->findOrFail($field['id']);
-                $lessons = $f->lessons->map(function ($lesson){
-                    return ['id'=> $lesson->id,
-                            'order' => $lesson->pivot->lesson_order];
+                $lesson_ids = $f->lessons->map(function ($lesson){
+                    return $lesson->id;
                 });
-                $first_lesson_id = $this->findFirstLessonId($lessons);
-                FieldUser::updateOrCreate(['field_id'=>$field['id'], 'user_id' => $validated['userId']],['priority' => 1, 'last_lesson_id'=>$first_lesson_id, 'last_lesson_stat'=> 'under']); //(priority) 1: working, 10: archived
+                $first_lesson_id = $this->findFirstLessonId($lesson_ids->toArray());
+                FieldUser::updateOrCreate(['field_id'=>$field['id'], 'user_id' => $validated['userId']],['priority' => 1, 'last_lesson_id'=>$first_lesson_id]); //(priority) 1: working, 10: archived
         } 
             foreach($rm_fields as $field){
             FieldUser::updateOrCreate(['field_id'=>$field['id'], 'user_id' => $validated['userId']],['priority' => 10]); 
@@ -58,16 +57,9 @@ class FLUController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function findFirstLessonId($lessons){
-        $m_o = $lessons[0]['order'];
-        $id_m = $lessons[0]['id'];
-        foreach($lessons as $lesson){
-            if($lesson['order'] < $m_o){
-                $m_o = $lesson['order'];
-                $id_m = $lesson['id']; 
-            }
-        }
-        return $id_m;
+    public function findFirstLessonId($lesson_ids){
+        
+        return min($lesson_ids);
     }
 
     public function getUserFields(Request $request){
@@ -89,9 +81,7 @@ class FLUController extends Controller
                 'img_path' => $field->img_path,
                 'description' => $field->description,
                 'has_order' => $field->has_order,
-                'last_lesson_id' => $field->pivot->last_lesson_id,
-                'last_lesson_stat' => $field->pivot->last_lesson_stat,
-
+                'last_lesson_id' => $field->pivot->last_lesson_id, 
             ];
         });
        return response()->json(['data' => $fields]);
@@ -103,9 +93,6 @@ class FLUController extends Controller
             'userId' => ['required', 'integer'],
             'fieldId' => ['required', 'integer'],
         ]);
-        
-        //$field = Field::find($validated['fieldId']);
-        //$lessons = $field->lessons()->where('status', 'published')->get();
 
         $field = Field::with(['lessons' => function ($q) use ($validated) {
             $q->where('status', 'published')
@@ -124,8 +111,7 @@ class FLUController extends Controller
                     'title' =>    $lesson->title,
                     'img_path' => $lesson->img_path,
                     'abstract' => $lesson->abstract,
-                    'order' =>    $lesson->pivot->lesson_order,
-                    'score' =>    $user ? $user->pivot->score : null, 
+                    'score' =>    $user ? $user->pivot->score : null,
                 ];
             }); 
 
@@ -525,43 +511,26 @@ class FLUController extends Controller
         if($fill_sc >= 0.7 && $reply_sc >= 0.7 && $tf_sc >= 0.7 && $ass_sc >= 0.7){
             $passed = true;
         }
-
-
-        //$passed = $this->checkFieldUsrStatus($validated['lessonId']);
+ 
         if(!$passed){ return response()->json(['passed'=> $passed]); }
 
         $fl = FieldLesson::where('field_id', $validated['fieldId'])
         ->where('lesson_id', $validated['lessonId'])->first();
-        $lesson_order = 0;
-        $prev_last_lesson_order = 0;
-        if($fl){
-            $lesson_order = $fl->lesson_order;
-        }
 
         $fu = FieldUser::where('user_id', auth()->id())->where('field_id', $validated['fieldId'])->first();
         $prev_last_lesson_id = 0;
-        $prev_last_lesson_stat = '';
-
         if($fu){
             $prev_last_lesson_id = $fu->last_lesson_id;
-            //$prev_last_lesson_stat = $fu->last_lesson_stat;
-            $prev_fl = FieldLesson::where('field_id', $validated['fieldId'])
-            ->where('lesson_id', $prev_last_lesson_id)->first();
-            if($prev_fl){
-                $prev_last_lesson_order = $prev_fl->lesson_order;
-            }
         }
 
-        //if($prev_last_lesson_order > $lesson_order){ return response()->json(['passed'=> false]); }
-
-        if($prev_last_lesson_order == $lesson_order){ 
-           $next_lesson_id = FieldLesson::where('field_id', $validated['fieldId'])
-            ->where('lesson_order', '>', $lesson_order)
-            ->orderBy('lesson_order', 'asc')->first()->lesson_id;
-
+        if($prev_last_lesson_id == $validated['lessonId']){
+            $next_lesson_id = FieldLesson::where('field_id', $validated['fieldId'])
+            ->where('lesson_id', '>', $validated['lessonId'])
+            ->orderBy('lesson_id', 'asc')->first()->lesson_id;
             FieldUser::updateOrCreate(['field_id'=> $validated['fieldId'], 'user_id'=> auth()->id()],
-                 ['last_lesson_id'=> $next_lesson_id, 'last_lesson_stat'=> 'under']);
-             }
+                 ['last_lesson_id'=> $next_lesson_id]);
+
+        }
 
              Log::debug("Scores 3 ". $scores['fill']['correct'] . " *** ". $scores['fill']['all']);
 
@@ -569,8 +538,6 @@ class FLUController extends Controller
              Log::debug("Scores mean ". $mean_sc);
              UserLs::updateOrCreate(['user_id'=> auth()->id(),
               'lesson_id'=> $validated['lessonId']], ['score'=> $mean_sc]);
-             
-
 
         return response()->json(['passed'=> $passed]);
     }
@@ -590,30 +557,9 @@ class FLUController extends Controller
                    'ass'=>['all'=>$ass_score['all'], 'correct'=>$ass_score['correct']]
                ];
 
-        //$passed = false;
-
-        /*if($fill_score['correct'] >= 0.7 && $reply_score['correct'] >= 0.7
-         && $tf_score['correct'] >= 0.7 && $ass_score['correct'] >= 0.7 ){
-            $passed = true;
-        }*/
-
         //return $passed;
         return $scores;
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    } 
 
     public function calcUsrTestFillsScore($lessonId){
 
@@ -643,7 +589,7 @@ class FLUController extends Controller
             $wrongs = $wrongs + $sc['wrong_i'];
         }
 
-        $all = count($score_arr);
+        $all = $score_arr->count();
         $res = ['all'=> $all, 'wrong'=> $wrongs, 'correct'=> $corrects];
         return $res;
     }
@@ -672,7 +618,7 @@ class FLUController extends Controller
             $wrongs = $wrongs + $sc['wrong_i'];
         }
 
-        $all = count($score_arr);
+        $all = $score_arr->count();
         $res = ['all'=> $all, 'wrong'=> $wrongs, 'correct'=> $corrects];
         return $res;
     }
@@ -701,7 +647,7 @@ class FLUController extends Controller
             $wrongs = $wrongs + $sc['wrong_i'];
         }
 
-        $all = count($score_arr);
+        $all = $score_arr->count();
         $res = ['all'=> $all, 'wrong'=> $wrongs, 'correct'=> $corrects];
         return $res;
     }
@@ -730,9 +676,33 @@ class FLUController extends Controller
             $wrongs = $wrongs + $sc['wrong_i'];
         }
 
-        $all = count($score_arr);
+        $all = $score_arr->count();
         $res = ['all'=> $all, 'wrong'=> $wrongs, 'correct'=> $corrects];
         return $res;
+    }
+
+    public function isLessonOpenToUser(Request $request){
+        $validated = $request->validate([
+            'lessonId' => ['required', 'integer'],
+            'fieldId' => ['required', 'integer'],
+        ]);
+
+        $is_premium = User::find(auth()->id())->isPremium();
+
+        if($is_premium){
+            return response()->json(['is_open'=> true]);
+        }
+
+        $fl = FieldLesson::where('field_id', $validated['fieldId'])
+        ->where('lesson_id', $validated['lessonId'])->first();
+
+        $is_open = false;
+
+        if($fl){
+            $is_open = $fl->is_open;
+        }
+
+        return response()->json(['is_open'=> $is_open]);
     }
 
 

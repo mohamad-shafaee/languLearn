@@ -20,8 +20,7 @@ return new class extends Migration
                   ->constrained('users')      // references id on users table
                   ->onDelete('cascade');
             $table->unsignedTinyInteger('priority')->nullable();
-            $table->unsignedBigInteger('last_lesson_id')->nullable();
-            $table->string('last_lesson_stat')->nullable();
+            $table->unsignedBigInteger('last_lesson_id')->nullable(); 
             $table->unique(['field_id', 'user_id']);   
             $table->timestamps();
         });

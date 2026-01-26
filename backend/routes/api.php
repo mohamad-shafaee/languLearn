@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\FLController;
 use App\Http\Controllers\FLUController;
+use App\Http\Controllers\PayController;
 
 use Illuminate\Http\Request;
 
@@ -57,7 +58,7 @@ Route::middleware('auth:sanctum')->post('/upload-lesson-tech-words', [FLControll
 //Route::middleware('auth:sanctum')->post('/add-lesson', [FLController::class, 'addLesson']);
 //Route::middleware('auth:sanctum')->post('/get-lessons-cards', [FLController::class, 'getLessonsCards']);
 Route::middleware('auth:sanctum')->post('/get-lessons-cards-by-field', [FLController::class, 'getLessonsCardsByField']);
-Route::middleware('auth:sanctum')->post('/update-lessons-orders', [FLController::class, 'updateLessonsOrders']);
+//Route::middleware('auth:sanctum')->post('/update-lessons-orders', [FLController::class, 'updateLessonsOrders']);
 
 Route::middleware('auth:sanctum')->post('/selected-fields', [FLController::class, 'getLessonFields']);
 Route::middleware('auth:sanctum')->post('/get-lesson', [FLController::class, 'getLesson']);
@@ -103,6 +104,8 @@ Route::middleware('auth:sanctum')->post('/get-lesson-wdm-tests', [FLController::
 
 
 Route::middleware('auth:sanctum')->post('/archive-lesson', [FLController::class, 'archiveLesson']);
+Route::middleware('auth:sanctum')->post('/unarchive-lesson', [FLController::class, 'unArchiveLesson']);
+Route::middleware('auth:sanctum')->post('/change-access-lesson', [FLController::class, 'changeAccessLesson']);
 Route::middleware('auth:sanctum')->post('/change-lesson-status', [FLController::class, 'changeLessonStatus']);
 
 Route::middleware('auth:sanctum')->post('/get-raw-word-id', [FLController::class, 'getRawWordId']);
@@ -143,6 +146,27 @@ Route::middleware('auth:sanctum')->post('/get-user-test-replies-score', [FLUCont
 Route::middleware('auth:sanctum')->post('/get-user-test-tfs-score', [FLUController::class, 'getUsrTestTFsScore']);
 Route::middleware('auth:sanctum')->post('/get-user-test-fills-score', [FLUController::class, 'getUsrTestFillsScore']);
 Route::middleware('auth:sanctum')->post('/update-field-user-status', [FLUController::class, 'updateFieldAndLessonUsrStatus']);
+
+
+Route::middleware('auth:sanctum')->post('/check-user-access-lesson', [FLUController::class, 'isLessonOpenToUser']);
+
+Route::middleware('auth:sanctum')->post('/get-user-plans-details', [PayController::class, 'getUserPlansDetails']);
+
+Route::middleware('auth:sanctum')->post('/get-user-subscriptions-details', [PayController::class, 'getUserSubscriptionsDetails']);
+
+// for admins at PayController
+Route::middleware('auth:sanctum')->post('/get-plans-for-admins', [PayController::class, 'getPlansForAdmins']);
+
+
+
+Route::middleware('auth:sanctum')->post('/take-plan-id', [PayController::class, 'takePlanId']);
+Route::middleware('auth:sanctum')->post('/get-plan-by-id-for-admin', [PayController::class, 'getPlanByIdForAdmin']);
+Route::middleware('auth:sanctum')->post('/update-plan-by-admin', [PayController::class, 'updatePlanByAdmin']);
+Route::middleware('auth:sanctum')->post('/remove-plan-by-admin', [PayController::class, 'removePlanByAdmin']);
+Route::middleware('auth:sanctum')->post('/create-payment', [PayController::class, 'createPayment']);
+
+Route::get('/payment/zarinpal/callback', [PayController::class, 'zarinpalCallback'])
+    ->name('zarinpal.callback');
 
 
 

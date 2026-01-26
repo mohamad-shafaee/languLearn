@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('description')->nullable();
             $table->string('img_path')->nullable();
             $table->boolean('has_order')->default(1);
-            $table->unsignedTinyInteger('category')->default(1); // 1: usual category. If a field be free, set 10, ...
+            //$table->unsignedTinyInteger('category')->default(1); // 1: usual category. If a field be free, set 10, ...
             $table->timestamps();
         });
     }

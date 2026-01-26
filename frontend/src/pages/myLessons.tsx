@@ -28,8 +28,8 @@ export type LessonItem = {
   img_path: string;
   abstract: string;
   fieldIds: FieldItem[];
-  status: string;
-  order: number | null;
+  status: string; 
+  is_open: boolean;
 }
 
 const MyLessons: React.FC = () => {
@@ -43,7 +43,7 @@ const MyLessons: React.FC = () => {
   const [isGetting, setIsGetting] = useState<boolean>(false);
   const [fields, setFields] = useState<Field[]>([]);
   const [selectedField, setSelectedField] = useState<Field | null>(null);
-  const [sortMode, setSortMode] = useState<boolean>(false);
+  //const [sortMode, setSortMode] = useState<boolean>(false);
   const navigate = useNavigate();
 
   const edit = (item) => {
@@ -102,7 +102,38 @@ const MyLessons: React.FC = () => {
           }
         const result = await response.json();
         if(result.success){
-          setLessons(lessons.filter(le => le.id != item.id));
+          //setLessons(lessons.filter(le => le.id != item.id));
+          setLessons(prev => prev.map(le => le.id == item.id ? {...le, status: "archived"} : le));
+        }
+          
+       } catch {} finally {setIsGetting(false);}; 
+         } 
+    };
+
+    const unRemove = async (item) => {
+    const confirmed = window.confirm("Are you sure to return the lesson?");
+       if (confirmed) {
+         try {
+
+           setIsGetting(true);
+           const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/unarchive-lesson`, {
+             method: "POST",
+             headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Authorization": `Bearer ${token}`, //send token here
+            },
+              body: JSON.stringify({
+                lessonId: item.id,
+                              })
+          });
+         if (!response.ok) {
+          alert("The lesson is not un archived. You can try again.");
+          return;
+          }
+        const result = await response.json();
+        if(result.success){
+          setLessons(prev => prev.map(le => le.id == item.id ? {...le, status: "raw"} : le));
         }
           
        } catch {} finally {setIsGetting(false);}; 
@@ -169,17 +200,49 @@ const MyLessons: React.FC = () => {
 
   }, [selectedField]);
 
+      const changeLessonAccess = async (item, access) => {
+    const confirmed = window.confirm("Are you sure to change the lesson access?");
+       if (confirmed) {
+         try {
+
+           setIsGetting(true);
+           const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/change-access-lesson`, {
+             method: "POST",
+             headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              "Authorization": `Bearer ${token}`, //send token here
+            },
+              body: JSON.stringify({
+                fieldId: selectedField.id,
+                lessonId: item.id,
+                access: access,
+                              })
+          });
+         if (!response.ok) {
+          alert("The lesson access is not changed. You can try again.");
+          return;
+          }
+        const result = await response.json();
+        if(result.success){
+          setLessons(prev => prev.map(le => le.id == item.id ? {...le, is_open: access} : le));
+        }
+          
+       } catch {} finally {setIsGetting(false);}; 
+         } 
+    };
+
   
 
 
-    const sortItem = (item, order_val) => {
+    /*const sortItem = (item, order_val) => {
       //first check that all orders are integer and are not same. 
       setLessons(prev => 
         prev.map(le => (le.id == item.id)? {...le, order: order_val} : le));
 
-    };
+    };*/
 
-  const sortLessons = async () => {
+  /*const sortLessons = async () => {
     //send a fetch to update lessons orders
              try {
            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/update-lessons-orders`, {
@@ -205,11 +268,11 @@ const MyLessons: React.FC = () => {
       }
           
     } catch {} finally {};
-  };
+  };*/
 
-  const setLessonOrders = () => {
+  /*const setLessonOrders = () => {
     setSortMode(!sortMode);
-  };
+  };*/
 
 
 
@@ -229,22 +292,16 @@ return <>
         onClick={()=>{setSelectedField(item);}}>{item.name}</div>))}
     </div>
   </div>
-  <div className="flex flex-col w-[80%]">
-    <div className="flex border-2 border-gray-300 px-2 py-2 w-full">
-      <div className="flex text-xs hover:bg-gray-100 hover:cursor-pointer border-2 border-gray-500
-     rounded-md mx-4 px-2 py-1 w-fit"
-       onClick={()=>{setLessonOrders()}}>Orders</div>
-    <div className="flex text-xs hover:bg-gray-100 hover:cursor-pointer border-2 border-gray-500
-     rounded-md mx-4 px-2 py-1 w-fit"
-       onClick={()=>{sortLessons()}} >Sort</div>
-     </div>
-    {lessons.length > 0 && lessons.slice().sort((a, b) => a.order - b.order)
+  <div className="flex flex-col w-[80%]"> 
+    {lessons.length > 0 && lessons.slice().sort((a, b) => a.id - b.id)
     .map((item, index) => {return(<div key={item.id} 
       className="flex">
-      <LessonCard sortable={sortMode} item={item} onEditi={(i) => edit(i)} 
+      <LessonCard item={item} onEditi={(i) => edit(i)} 
         onPublishi={(i) => changePublishStat(i, 'published')}
         onUnPublishi={(i) => changePublishStat(i, 'raw')}
-        onRemovei={(i) => remove(i)} onSorti={(i, v)=> sortItem(i, v)}/>
+        onRemovei={(i) => remove(i)}
+        onUnRemovei={(i) => unRemove(i)}
+         onChangeOpen={(i, access)=>changeLessonAccess(i, access)}/>
     </div>);})}
   </div>
 </div>

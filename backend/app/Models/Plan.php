@@ -8,13 +8,17 @@ class Plan extends Model
 {
     protected $fillable = [
         'name',
+        'color',
+        'fields',
+        'author_id',
         'price',
         'currency',
         'interval',
         'description',
         'provider_plan_id',
         'provider',
-
+        'inactivated_at',
+        'status',
     ];
 
     /**
@@ -23,6 +27,11 @@ class Plan extends Model
     public function subscriptions()
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    public function author()
+    {
+    return $this->belongsTo(User::class, 'author_id');
     }
 
 }

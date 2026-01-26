@@ -20,7 +20,7 @@ return new class extends Migration
             $table->foreignId('lesson_id')      // FK column
                   ->constrained('lessons')      // references id on lessons table
                   ->onDelete('cascade'); 
-            $table->unsignedInteger('lesson_order')->nullable();
+            $table->boolean('is_open')->default(false);
             $table->primary(['field_id', 'lesson_id']);
             $table->timestamps();
         });

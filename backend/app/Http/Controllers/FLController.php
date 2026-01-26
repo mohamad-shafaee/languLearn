@@ -978,6 +978,26 @@ class FLController extends Controller
         return response()->json(['success' => true]); 
     }
 
+    public function unArchiveLesson(Request $request){
+        $validated = $request->validate([
+        'lessonId' => ['required', 'integer'],
+    ]);
+        Lesson::where('id', $validated['lessonId'])->update(['status'=>'raw']);
+        return response()->json(['success' => true]); 
+    }
+
+    public function changeAccessLesson(Request $request){
+        $validated = $request->validate([
+        'fieldId' => ['required', 'integer'],
+        'lessonId' => ['required', 'integer'],
+        'access' => ['required', 'boolean'],
+    ]);
+        FieldLesson::where('field_id', $validated['fieldId'])
+        ->where('lesson_id', $validated['lessonId'])
+        ->update(['is_open'=>$validated['access']]);
+        return response()->json(['success' => true]); 
+    }
+
     public function changeLessonStatus(Request $request){
         $validated = $request->validate([
         'lessonId' => ['required', 'integer'],
@@ -988,7 +1008,7 @@ class FLController extends Controller
 
     }
 
-    public function getLessonsCardsByField(Request $request){
+    /*public function getLessonsCardsByField(Request $request){
         $validated = $request->validate([
             'fieldId' => ['nullable', 'integer'],
             'recent' => ['nullable', 'boolean'],
@@ -1004,8 +1024,7 @@ class FLController extends Controller
         })->with(['author:id,name',
                   'fields' => function ($q) use ($f_id) {
                         $q->where('fields.id', $f_id)
-                        ->select('fields.id') // minimal
-                        ->withPivot('lesson_order');
+                        ->select('fields.id');
         }])
           ->select('id', 'author_id', 'title', 'img_path', 'abstract', 'status')
           ->get();
@@ -1019,14 +1038,49 @@ class FLController extends Controller
         'title' => $lesson->title,
         'img_path' => $lesson->img_path,
         'abstract' => $lesson->abstract,
-        'order' => $field?->pivot->lesson_order,
-        'status' => $lesson->status,
+        'status' => $lesson->status, 
+        ];
+       });
+        return response()->json($result); 
+    }*/
+
+        public function getLessonsCardsByField(Request $request){
+        $validated = $request->validate([
+            'fieldId' => ['nullable', 'integer'],
+            'recent' => ['nullable', 'boolean'],
+            'authorId' => ['nullable', 'integer'],
+            'search' => ['nullable', 'string'],
+        ]);
+
+        $f_id = $validated['fieldId'];
+        $lessons = Lesson::/*whereIn('status', ['raw', 'published'])->*/
+        whereHas('fields', function ($query) use ($f_id) {
+        $query->where('id', $f_id);
+        })->with(['author:id,name',
+                  'fields' => function ($q) use ($f_id) {
+                        $q->where('fields.id', $f_id)
+                        ->select('fields.id');
+        }])
+          ->select('id', 'author_id', 'title', 'img_path', 'abstract', 'status')
+          ->get();
+
+        $result = $lessons->map(function ($lesson) {
+            $field = $lesson->fields->first(); // only one exists
+            return [
+        'id' => $lesson->id,
+        'author_id' => $lesson->author_id,
+        'author_name' => $lesson->author->name ?? "",
+        'title' => $lesson->title,
+        'img_path' => $lesson->img_path,
+        'abstract' => $lesson->abstract,
+        'status' => $lesson->status, 
+        'is_open' => $field->pivot->is_open
         ];
        });
         return response()->json($result); 
     }
 
-    public function updateLessonsOrders(Request $request){
+    /*public function updateLessonsOrders(Request $request){
         $validated = $request->validate([
             'fieldId' => ['required', 'integer'],
             'lessons' => ['required', 'array', 'min:1'],    
@@ -1040,7 +1094,9 @@ class FLController extends Controller
             ]);
          }
         });
-    }
+        return response()->json(['success' => true]);
+
+    }*/
 
     public function getInteractiveWords(Request $request){
         $validated = $request->validate([

@@ -13,26 +13,22 @@ return new class extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
+            $table->string('order_id')->unique();
             $table->foreignId('user_id')
                   ->constrained('users')
-                  ->cascadeOnDelete();
-
-            // Amount in smallest unit (cents)
-            $table->unsignedBigInteger('amount');
-
-            // ISO 4217 currency code, e.g. USD, EUR
-            $table->char('currency', 3);
-
-            // Status of payment
+                  ->cascadeOnDelete();  
+            $table->unsignedBigInteger('amount');  // Amount in smallest unit (cents) 
+            $table->char('currency', 3); // ISO 4217 currency code, e.g. USD, EUR
             $table->string('status')->default('pending'); 
 
-            // Payment provider info
-            $table->string('provider');              // stripe, paypal, crypto
-            $table->string('provider_payment_id');   // transaction ID / payment intent
+            $table->string('provider');              // IDPay, stripe, paypal, crypto, zarinpal
+            $table->string('provider_payment_id')->nullable();// IDPay unique key, transaction ID / payment intent
+            $table->json('provider_payload')->nullable();
 
             // Polymorphic relation to what the payment is for
             // e.g., subscription, course, wallet top-up
-            $table->morphs('payable'); 
+            $table->morphs('payable');
+            $table-> ???('paid_at')->nullable(); 
             $table->timestamps();
 
             // Indexes for common queries

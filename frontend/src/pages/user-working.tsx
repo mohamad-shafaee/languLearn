@@ -10,8 +10,7 @@ type Field = {
   img_path: string | null;
   description: string | null;
   has_order: boolean | null;
-  last_lesson_id: number | null;
-  last_lesson_stat: string | null;
+  last_lesson_id: number | null; 
 };
 
 type Lesson = {
@@ -233,27 +232,17 @@ const UserWorking: React.FC = () => {
   };
 
   const openLesson = (lesson) => {
-    // access control at route level like protected route
-    const access = user.is_premium;
-    if(!access){
-      //navigate to buy premium page
-      //navigate(`/premium-panels`);
-
-    } else {
-      const last_lesson = usrLessons.find(item => item.id == currentUsrField.last_lesson_id);
+   
     const is_open = !currentUsrField.has_order ? true : 
-      (lesson.order <= last_lesson.order);
+      (lesson.id <= currentUsrField.last_lesson_id);
 
     if(!is_open){
-      alert("You should pass prerequired lessons first!");
+      alert("You should pass previous lessons first!");
       return;
     }
     navigate(`/lesson-page/${currentUsrField.id}/${lesson.id}`);
 
-    }
-
-    
-  };
+};
    
   return (<div className="flex flex-col w-full items-center justify-center">
     {(addRemoveFieldOpen || selectFieldNeed) && 
@@ -297,9 +286,9 @@ const UserWorking: React.FC = () => {
           className={`flex w-full px-1 py-1 mt-4 mx-2 border-2
         rounded-md overflow-hidden ${item.id == currentUsrField.last_lesson_id ? 
           "border-blue-500 text-blue-500 shadow-md hover:cursor-pointer hover:text-blue-500" 
-          : ""} ${item.order <= usrLastLessonOrder ? 
-          "hover:cursor-pointer hover:text-blue-500 hover:shadow-lg border-gray-300 text-black-500" : 
-          "border-gray-300 text-gray-400 hover:none"}`}
+          : (item.id < currentUsrField.last_lesson_id ? 
+            "hover:cursor-pointer hover:text-blue-500 hover:shadow-lg border-gray-300 text-black-500" :
+             "border-gray-300 text-gray-400 hover:none")}`}
         onClick={()=>openLesson(item)}>
         <div className="flex w-12 h-12"><img src={item.img_path ?? ""} alt="Lesson Image"
           className="flex w-12 h-12 rounded-md"/></div>
@@ -309,7 +298,7 @@ const UserWorking: React.FC = () => {
         <div className="flex text-xs w-fit">{item.score ?? ''}</div>
         {item.id == currentUsrField.last_lesson_id 
         && (<div className="flex text-xs px-1 text-green-700 w-fit">current</div>)}
-        {item.order > usrLastLessonOrder 
+        {item.id > currentUsrField.last_lesson_id 
         && (<div className="flex text-xs px-1 text-red-500 w-fit">close</div>)}
         {user.is_premium 
         && (<div className="flex text-xs px-1 text-red-500 w-fit">access</div>)}

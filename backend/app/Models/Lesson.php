@@ -39,7 +39,7 @@ class Lesson extends Model
     public function fields()
     {
         return $this->belongsToMany(Field::class, 'field_lessons')
-        ->withPivot('lesson_order')
+        ->withPivot('is_open')
         ->using(FieldLesson::class) 
         ->withTimestamps();
     }

@@ -139,6 +139,7 @@ const LessonPage: React.FC = () => {
   const [submittingTestTF, setSubmittingTestTF] = useState<boolean>(false);
   const [submittingTestReply, setSubmittingTestReply] = useState<boolean>(false);
   const [submittingTestAss, setSubmittingTestAss] = useState<boolean>(false);
+  const [showLessonPassedMessage, setShowLessonPassedMessage] = useState(false);
 
   useEffect(()=>{
     setUsrDDTestsP1(usrDDTests.filter(te => (te.part == 1 && te.word != '' && te.text1 != '')));
@@ -649,7 +650,7 @@ useEffect(()=>{
       const data = await res.json();
       if (res.ok) {
         if(data.passed){
-          alert("Congratulations! You passed the lesson and could take the next lesson.");
+          setShowLessonPassedMessage(true);        
         }
       } else { }
     } catch (err) { } finally{ }
@@ -658,6 +659,16 @@ useEffect(()=>{
   updateFieldUsrStatus();
 
 }, [testFillAnswerToggle, testTFAnswerToggle, testReplyAnswerToggle,testAssAnswerToggle]);
+
+useEffect(() => {
+  if (!showLessonPassedMessage) return;
+
+  const timer = setTimeout(() => {
+    setShowLessonPassedMessage(false);
+  }, 5000);
+
+  return () => clearTimeout(timer);
+}, [showLessonPassedMessage]);
 
   useEffect(() => {
 
@@ -997,8 +1008,8 @@ useEffect(()=>{
 
    return <>
    {step == 1 && (<div className="flex w-full">
-   <div className="flex flex-col w-48 border-2 border-blue-500 rounded-md">
-    <div className="flex flex-col h-fit py-4 px-1">
+   <div className="flex flex-col fixed top-17 left-1 h-fit w-48 border-2 border-blue-500 rounded-md">
+    <div className="flex sticky top-5 flex-col h-fit w-full py-4 px-1">
       <div className={`flex px-4 py-1 mt-2 bg-blue-50 rounded-md
         ${step1Sec == 1 ? "text-gray-400 hover:none" :
          "hover:text-blue-700 hover:cursor-pointer hover:shadow-md"
@@ -1013,8 +1024,10 @@ useEffect(()=>{
      }`} onClick={()=>navStep1(3)}>Technical Terms</div>
     </div>
   </div>
-   <div className="flex flex-col items-center w-full border-2 border-green-500 rounded-md">
-    {step1Sec == 1 && (<><div className="flex border-1 border-red-300 w-fit mt-4 px-4 py-1 ">
+   <div className="flex flex-col
+    items-center w-full border-2 border-green-500 rounded-md">
+    {step1Sec == 1 && (<div className="flex flex-col w-full items-center overflow-y-scroll scrollbar-hide">
+      <div className="flex border-1 border-red-300 w-fit mt-4 px-4 py-1 ">
       <div className="flex p-2 font-semibold text-xl">{lesson?.title}</div>
       <div className="flex p-2 w-36 h-36 relative border-2 border-blue-300 rounded-md">
         <img src={lesson?.img_path || null} alt="Lesson Image"
@@ -1032,7 +1045,7 @@ useEffect(()=>{
       </div> 
      <div className="flex p-2 mt-8 w-2/3 h-fit relative border-2 border-blue-300 rounded-md">
         {lesson?.video1_text}
-      </div></>)}
+      </div></div>)}
 {step1Sec == 2 && (<>{(interactiveWords.length > 0) && (<div className="flex 
   flex-col p-2 mt-2 w-2/3 relative
        border-2 border-blue-300 rounded-md"> 
@@ -1469,6 +1482,9 @@ useEffect(()=>{
        border-gray-300 rounded-md hover:cursor-pointer hover:shadow-md"
                 onClick={submitTestFillsAnswer}>Save Answers</div>
                 {submittingTestFill && (<div className="flex px-2 py-1 w-fit mt-4">Sending...</div>)}</div>
+      {showLessonPassedMessage &&(<div className="flex w-fit px-4 py-2 text-green-700
+       bg-green-300 rounded-md font-semibold">Congratulations! You passed this lesson and
+        can take the next lesson!</div>)}
       </div>
       <div className="flex w-fit"><TestEvaluation data={usrTestFillsScore}/></div>
 </div>)}
@@ -1485,7 +1501,10 @@ useEffect(()=>{
       <div className="flex w-fit"><div className="flex px-2 py-1 w-fit mt-4 border-1
        border-gray-300 rounded-md hover:cursor-pointer hover:shadow-md"
                 onClick={submitTestTFsAnswer}>Save Answers</div>
-                {submittingTestTF && (<div className="flex px-2 py-1 w-fit mt-4">Sending...</div>)}</div>  
+                {submittingTestTF && (<div className="flex px-2 py-1 w-fit mt-4">Sending...</div>)}</div>
+                {showLessonPassedMessage &&(<div className="flex w-fit px-4 py-2 text-green-700
+       bg-green-300 rounded-md font-semibold">Congratulations! You passed this lesson and
+        can take the next lesson!</div>)}  
       </div>
 <div className="flex w-fit"><TestEvaluation data={usrTestTFsScore}/></div>
     </div>)}
@@ -1505,6 +1524,9 @@ useEffect(()=>{
        border-gray-300 rounded-md hover:cursor-pointer hover:shadow-md"
                 onClick={submitTestRepliesAnswer}>Save Answers</div>
                 {submittingTestReply && (<div className="flex px-2 py-1 w-fit mt-4">Sending...</div>)}</div>
+                {showLessonPassedMessage &&(<div className="flex w-fit px-4 py-2 text-green-700
+       bg-green-300 rounded-md font-semibold">Congratulations! You passed this lesson and
+        can take the next lesson!</div>)}
       </div>
     <div className="flex w-fit"><TestEvaluation data={usrTestRepliesScore}/></div>
   </div></>)}
@@ -1523,13 +1545,16 @@ useEffect(()=>{
        border-gray-300 rounded-md hover:cursor-pointer hover:shadow-md"
                 onClick={submitTestAssesAnswer}>Save Answers</div>
                 {submittingTestAss && (<div className="flex px-2 py-1 w-fit mt-4">Sending...</div>)}</div>
+                {showLessonPassedMessage &&(<div className="flex w-fit px-4 py-2 text-green-700
+       bg-green-300 rounded-md font-semibold">Congratulations! You passed this lesson and
+        can take the next lesson!</div>)}
       </div>
     <div className="flex w-fit"><TestEvaluation data={usrTestAssesScore}/></div>
   </div></>)}
  
 
 
-<div className="flex sticky bottom-0 w-full"><ProgressBar step={step}
+<div className="fixed bottom-0 w-full"><ProgressBar step={step}
  next={next} prev={prev} setStep={setStep}/></div>
   </>; 
 }

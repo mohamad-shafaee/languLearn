@@ -19,11 +19,11 @@ const CreateField: React.FC = () => {
   const imgFieldRef = useRef(null);
   const nameFieldRef = useRef(null);
   const descFieldRef = useRef(null);
-  const [field, setField] = useState<Field>({author_id: user.id, img_path: ""});
+  const [field, setField] = useState<Field>({id: 0, name: "", author_id: user.id, img_path: "", description: ""});
   const [fields, setFields] = useState<Field[]>([]); 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [refreshList, setRefreshList] = useState<boolean>(false);
-  const [refreshField, setRefreshField] = useState<boolean>(false);
+  //const [refreshField, setRefreshField] = useState<boolean>(false);
   const navigate = useNavigate();
   
 
@@ -102,13 +102,13 @@ const CreateField: React.FC = () => {
     } catch {} finally {};
     };
 
-    if(fieldId == 'create'){
+    if(fieldId == 'create' && !isSubmitting){
     requestAndSetFieldId();
     }
     else if (Number.isInteger(Number(fieldId))){
         getField(); 
     } 
-  }, [fieldId, refreshField]);
+  }, [fieldId]);
 
     const submitField = async () => {
       if(field.name == ' ' || field.name == ''){
@@ -244,11 +244,10 @@ const CreateField: React.FC = () => {
    return <div className="flex w-full"><div className="flex justify-center
     items-center px-2 py-4 flex-col w-1/3">
     <div className="flex mt-8 w-36 h-36 relative border-1 border-blue-500">
-        <img src={field.img_path ?? ""} alt="Field image"
-          className="w-36 h-36 rounded-full mr-2"/>
-          {!isSubmitting && (<div className={`absolute bottom-1 right-1 ${
-    isSubmitting ? "pointer-events-none opacity-50" : "hover:cursor-pointer"
-  }`} onClick={selectFieldImage}>
+        {field.img_path && (<img src={field.img_path} alt="Field image"
+          className="w-36 h-36 rounded-full mr-2"/>)}
+          {!isSubmitting && (<div className={`absolute bottom-1 right-1 
+            ${isSubmitting ? "pointer-events-none opacity-50" : "hover:cursor-pointer"}`} onClick={selectFieldImage}>
             <Edit className="hover:shadow hover:cursor-pointer" size={24} /></div>)}
             <input type="file" ref={imgFieldRef} className="hidden" 
               accept="image/*" onChange={handleImageSelect}/>
@@ -283,8 +282,8 @@ const CreateField: React.FC = () => {
      {fields.length > 0 && fields.map((item, index)=>{ return(
       <div key={item.id} className="flex border-1 border-gray-500 rounded-md">
         <div className="flex items-center justify-center w-8 bg-gray-100 text-blue-500">{index + 1}</div>
-        <div className="flex w-12 h-12"><img src={item.img_path ?? ""} alt="Field Image"
-          className="flex w-12 h-12 rounded-md ml-2 mt-4"/></div>
+        <div className="flex w-12 h-12">{item.img_path && (<img src={item.img_path} alt="Field Image"
+          className="flex w-12 h-12 rounded-md ml-2 mt-4"/>)}</div>
     <div className="flex flex-col py-2 px-4 w-[50%] ">
       <div className="flex w-full pb-2 border-b-1">{item.name}</div>
       <div className="flex w-full text-xs bg-gray-50">{item.description}</div>
